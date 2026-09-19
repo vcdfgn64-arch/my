@@ -1,0 +1,319 @@
+-- ตรวจสอบและเคลียร์ UI เก่าออกก่อน
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+if playerGui:FindFirstChild("EggKingGui") then
+	playerGui.EggKingGui:Destroy()
+end
+if playerGui:FindFirstChild("EggKingBlackScreenGui") then
+	playerGui.EggKingBlackScreenGui:Destroy()
+end
+
+-- สร้าง ScreenGui หลัก
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "EggKingGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- กรอบหลัก (Main Frame)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 250, 0, 360)
+mainFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = mainFrame
+
+-- หัวข้อ (Egg King)
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 35)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "👑 Egg King 👑"
+titleLabel.TextColor3 = Color3.fromRGB(255, 215, 0) -- สีทอง
+titleLabel.TextSize = 18
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Parent = mainFrame
+
+
+-- ==================== ปุ่มที่ 1: PullupEvent ====================
+local toggleBtn1 = Instance.new("TextButton")
+toggleBtn1.Size = UDim2.new(0.9, 0, 0, 30)
+toggleBtn1.Position = UDim2.new(0.05, 0, 0, 40)
+toggleBtn1.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+toggleBtn1.Text = "Pullup: OFF"
+toggleBtn1.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn1.TextSize = 14
+toggleBtn1.Font = Enum.Font.SourceSansBold
+toggleBtn1.Parent = mainFrame
+
+Instance.new("UICorner", toggleBtn1).CornerRadius = UDim.new(0, 6)
+
+local label1 = Instance.new("TextLabel", mainFrame)
+label1.Size = UDim2.new(0.5, 0, 0, 25)
+label1.Position = UDim2.new(0.05, 0, 0, 75)
+label1.BackgroundTransparency = 1
+label1.Text = "Pullup Speed (วิ):"
+label1.TextColor3 = Color3.fromRGB(200, 200, 200)
+label1.TextSize = 12
+label1.TextXAlignment = Enum.TextXAlignment.Left
+
+local speedBox1 = Instance.new("TextBox", mainFrame)
+speedBox1.Size = UDim2.new(0.35, 0, 0, 25)
+speedBox1.Position = UDim2.new(0.6, 0, 0, 75)
+speedBox1.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+speedBox1.Text = "0.1"
+speedBox1.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedBox1.TextSize = 13
+Instance.new("UICorner", speedBox1).CornerRadius = UDim.new(0, 4)
+
+
+-- ==================== ปุ่มที่ 2: OnM1Event ====================
+local toggleBtn2 = Instance.new("TextButton")
+toggleBtn2.Size = UDim2.new(0.9, 0, 0, 30)
+toggleBtn2.Position = UDim2.new(0.05, 0, 0, 110)
+toggleBtn2.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+toggleBtn2.Text = "OnM1: OFF"
+toggleBtn2.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn2.TextSize = 14
+toggleBtn2.Font = Enum.Font.SourceSansBold
+toggleBtn2.Parent = mainFrame
+
+Instance.new("UICorner", toggleBtn2).CornerRadius = UDim.new(0, 6)
+
+local label2 = Instance.new("TextLabel", mainFrame)
+label2.Size = UDim2.new(0.5, 0, 0, 25)
+label2.Position = UDim2.new(0.05, 0, 0, 145)
+label2.BackgroundTransparency = 1
+label2.Text = "OnM1 Speed (วิ):"
+label2.TextColor3 = Color3.fromRGB(200, 200, 200)
+label2.TextSize = 12
+label2.TextXAlignment = Enum.TextXAlignment.Left
+
+local speedBox2 = Instance.new("TextBox", mainFrame)
+speedBox2.Size = UDim2.new(0.35, 0, 0, 25)
+speedBox2.Position = UDim2.new(0.6, 0, 0, 145)
+speedBox2.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+speedBox2.Text = "0.1"
+speedBox2.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedBox2.TextSize = 13
+Instance.new("UICorner", speedBox2).CornerRadius = UDim.new(0, 4)
+
+
+-- ==================== ปุ่มที่ 3: No AFK ====================
+local toggleBtn3 = Instance.new("TextButton")
+toggleBtn3.Size = UDim2.new(0.9, 0, 0, 35)
+toggleBtn3.Position = UDim2.new(0.05, 0, 0, 185)
+toggleBtn3.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+toggleBtn3.Text = "No AFK: OFF"
+toggleBtn3.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn3.TextSize = 14
+toggleBtn3.Font = Enum.Font.SourceSansBold
+toggleBtn3.Parent = mainFrame
+
+Instance.new("UICorner", toggleBtn3).CornerRadius = UDim.new(0, 6)
+
+local label4 = Instance.new("TextLabel", mainFrame)
+label4.Size = UDim2.new(0.5, 0, 0, 25)
+label4.Position = UDim2.new(0.05, 0, 0, 225)
+label4.BackgroundTransparency = 1
+label4.Text = "แตะซ้ำทุกๆ (นาที):"
+label4.TextColor3 = Color3.fromRGB(200, 200, 200)
+label4.TextSize = 12
+label4.TextXAlignment = Enum.TextXAlignment.Left
+
+local minuteBox = Instance.new("TextBox", mainFrame)
+minuteBox.Size = UDim2.new(0.35, 0, 0, 25)
+minuteBox.Position = UDim2.new(0.6, 0, 0, 225)
+minuteBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+minuteBox.Text = "5"
+minuteBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+minuteBox.TextSize = 13
+Instance.new("UICorner", minuteBox).CornerRadius = UDim.new(0, 4)
+
+
+-- ==================== ปุ่มที่ 4: หน้าจอดำ (Black Screen) ====================
+local blackScreenBtn = Instance.new("TextButton")
+blackScreenBtn.Size = UDim2.new(0.9, 0, 0, 35)
+blackScreenBtn.Position = UDim2.new(0.05, 0, 0, 265)
+blackScreenBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+blackScreenBtn.Text = "เปิดหน้าจอดำ (Black Screen)"
+blackScreenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+blackScreenBtn.TextSize = 13
+blackScreenBtn.Font = Enum.Font.SourceSansBold
+blackScreenBtn.Parent = mainFrame
+
+Instance.new("UICorner", blackScreenBtn).CornerRadius = UDim.new(0, 6)
+
+
+-- ==================== สร้างไอคอนลอยเปิด/ปิดเมนูหลัก ====================
+local toggleIcon = Instance.new("ImageButton")
+toggleIcon.Size = UDim2.new(0, 45, 0, 45)
+toggleIcon.Position = UDim2.new(0, 20, 0.4, 0)
+toggleIcon.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+toggleIcon.Image = "rbxassetid://117133182814637"
+toggleIcon.Parent = screenGui
+
+Instance.new("UICorner", toggleIcon).CornerRadius = UDim.new(1, 0) -- ทำเป็นวงกลม
+
+local iconVisible = true
+toggleIcon.MouseButton1Click:Connect(function()
+	iconVisible = not iconVisible
+	mainFrame.Visible = iconVisible
+end)
+
+
+-- ==================== สร้าง GUI สำหรับหน้าจอดำแยกต่างหาก ====================
+local blackGui = Instance.new("ScreenGui")
+blackGui.Name = "EggKingBlackScreenGui"
+blackGui.ResetOnSpawn = false
+blackGui.Enabled = false -- ปิดไว้ก่อนตอนเริ่ม
+blackGui.Parent = playerGui
+
+local blackBg = Instance.new("Frame")
+blackBg.Size = UDim2.new(1, 0, 1, 0)
+blackBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+blackBg.BorderSizePixel = 0
+blackBg.Parent = blackGui
+
+-- ไอคอนบนหน้าจอดำเพื่อให้กดปิดหน้าจอดำได้
+local blackIcon = Instance.new("ImageButton")
+blackIcon.Size = UDim2.new(0, 60, 0, 60)
+blackIcon.Position = UDim2.new(0.5, -30, 0.5, -30) -- อยู่ตรงกลางจอ
+blackIcon.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+blackIcon.Image = "rbxassetid://117133182814637"
+blackIcon.Parent = blackBg
+
+Instance.new("UICorner", blackIcon).CornerRadius = UDim.new(1, 0)
+
+-- กดปุ่มหน้าจอดำในเมนูหลัก เพื่อเปิดโหมดหน้าจอดำ
+blackScreenBtn.MouseButton1Click:Connect(function()
+	blackGui.Enabled = true
+	mainFrame.Visible = false -- ซ่อนเมนูหลักเมื่อเข้าหน้าจอดำ
+	iconVisible = false
+end)
+
+-- กดไอคอนบนหน้าจอดำเพื่อกลับมาหน้าปกติ
+blackIcon.MouseButton1Click:Connect(function()
+	blackGui.Enabled = false
+	mainFrame.Visible = true
+	iconVisible = true
+end)
+
+
+-- ==================== ระบบการทำงานทั้งหมด ====================
+local running1 = false
+local running2 = false
+local running3 = false
+
+local rs = game:GetService("ReplicatedStorage")
+local vim = game:GetService("VirtualInputManager")
+local vu = game:GetService("VirtualUser")
+
+-- ปุ่มที่ 1 Logic
+toggleBtn1.MouseButton1Click:Connect(function()
+	running1 = not running1
+	if running1 then
+		toggleBtn1.Text = "Pullup: ON"
+		toggleBtn1.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+	else
+		toggleBtn1.Text = "Pullup: OFF"
+		toggleBtn1.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		if running1 then
+			local speed = tonumber(speedBox1.Text) or 0.1
+			pcall(function()
+				rs:WaitForChild("PullupEvent"):FireServer()
+			end)
+			task.wait(speed)
+		else
+			task.wait(0.1)
+		end
+	end
+end)
+
+-- ปุ่มที่ 2 Logic
+toggleBtn2.MouseButton1Click:Connect(function()
+	running2 = not running2
+	if running2 then
+		toggleBtn2.Text = "OnM1: ON"
+		toggleBtn2.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+	else
+		toggleBtn2.Text = "OnM1: OFF"
+		toggleBtn2.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		if running2 then
+			local speed = tonumber(speedBox2.Text) or 0.1
+			pcall(function()
+				rs:WaitForChild("RunTime"):WaitForChild("OnM1Event"):FireServer()
+			end)
+			task.wait(speed)
+		else
+			task.wait(0.1)
+		end
+	end
+end)
+
+-- ระบบ Anti-AFK หลักป้องกันหลุด 20 นาที
+player.Idled:Connect(function()
+	if running3 then
+		pcall(function()
+			vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+			task.wait(1)
+			vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+		end)
+	end
+end)
+
+-- ปุ่มที่ 3 Logic (No AFK: แตะกลางจอ 1 ครั้ง ทุกๆ นาทีที่กำหนด)
+toggleBtn3.MouseButton1Click:Connect(function()
+	running3 = not running3
+	if running3 then
+		toggleBtn3.Text = "No AFK: ON"
+		toggleBtn3.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+	else
+		toggleBtn3.Text = "No AFK: OFF"
+		toggleBtn3.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		if running3 then
+			local waitMinutes = tonumber(minuteBox.Text) or 5
+			
+			pcall(function()
+				local viewportSize = workspace.CurrentCamera.ViewportSize
+				local centerX = viewportSize.X / 2
+				local centerY = viewportSize.Y / 2
+				
+				if vim then
+					vim:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
+					task.wait(0.05)
+					vim:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
+				end
+			end)
+			
+			local totalWaitSeconds = waitMinutes * 60
+			local elapsed = 0
+			while elapsed < totalWaitSeconds and running3 do
+				task.wait(1)
+				elapsed = elapsed + 1
+			end
+		else
+			task.wait(0.5)
+		end
+	end
+end)
