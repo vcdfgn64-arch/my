@@ -1,4 +1,4 @@
--- [[ Shadow Hex - Complete Edition (Part 1) ]] --
+-- [[ Shadow Hex - Complete Edition (Part 1 / 2) ]] --
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -10,7 +10,6 @@ local camera = workspace.CurrentCamera
 pcall(function()
     if CoreGui:FindFirstChild("ShadowHex_UI") then CoreGui.ShadowHex_UI:Destroy() end
     if CoreGui:FindFirstChild("ShadowHex_FlyUI") then CoreGui.ShadowHex_FlyUI:Destroy() end
-    if CoreGui:FindFirstChild("ShadowHex_ServerFinderUI") then CoreGui.ShadowHex_ServerFinderUI:Destroy() end
 end)
 
 local currentThemeColor = Color3.fromRGB(140, 60, 220)
@@ -99,7 +98,7 @@ MinimizeBtn.MouseButton1Click:Connect(function()
 end)
 
 local Pages = {}
-local tabNames = {"ตัวเรา", "บิน", "FOV", "ESP", "กันแบน", "ตั้งค่า"}
+local tabNames = {"ตัวเรา", "บิน", "FOV", "ESP", "ตั้งค่า"}
 
 for i, name in ipairs(tabNames) do
     local page = Instance.new("ScrollingFrame")
@@ -204,7 +203,7 @@ local function applySlider(bg, fill, minVal, maxVal, callback)
     end)
 end
 
--- ตั้งค่าหน้าตัวเรา
+-- หน้าตัวเรา
 local playerPage = Pages["ตัวเรา"]
 local speedLabel = createLabel(playerPage, "ความเร็วการเดิน (สูงสุด 400): 16")
 local speedSliderBg = createSliderBg(playerPage)
@@ -268,7 +267,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- ตั้งค่าหน้าบิน
+-- หน้าบิน (ลอยค้างนิ่ง ไม่ร่วง)
 local flyPage = Pages["บิน"]
 local flyToggleContainer = Instance.new("Frame")
 flyToggleContainer.Size = UDim2.new(1, 0, 0, 40)
@@ -367,7 +366,8 @@ RunService.RenderStepped:Connect(function()
             if movingStates.Down then velocity = velocity + Vector3.new(0, -1, 0) end
             if movingStates.Forward then velocity = velocity + camCFrame.LookVector end
             if movingStates.Backward then velocity = velocity - camCFrame.LookVector end
-            hrp.Velocity = velocity * flySpeed
+            
+            hrp.AssemblyLinearVelocity = velocity * flySpeed
             if localPlayer.Character:FindFirstChild("Humanoid") then
                 localPlayer.Character.Humanoid.PlatformStand = true
             end
@@ -375,14 +375,15 @@ RunService.RenderStepped:Connect(function()
             localPlayer.Character.Humanoid.PlatformStand = false
         end
     end)
-end)-- [[ Shadow Hex - Complete Edition (Part 2) ]] --
--- ตั้งค่าหน้า FOV
+end)
+-- [[ Shadow Hex - Complete Edition (Part 2 / 2) ]] --
+-- หน้า FOV (ล็อกคนที่อยู่ในวงกลม)
 local fovPage = Pages["FOV"]
 local fovToggleContainer = Instance.new("Frame")
 fovToggleContainer.Size = UDim2.new(1, 0, 0, 40)
 fovToggleContainer.BackgroundTransparency = 1
 fovToggleContainer.Parent = fovPage
-local fovToggleText = createLabel(fovToggleContainer, "เปิด/ปิด ระบบ FOV")
+local fovToggleText = createLabel(fovToggleContainer, "เปิด/ปิด ระบบ FOV & Lock")
 fovToggleText.Size = UDim2.new(0, 150, 1, 0)
 
 local fovToggleBtn = Instance.new("TextButton")
@@ -423,6 +424,27 @@ local successDrawing, fovDrawing = pcall(function()
     end
 end)
 
+local function getClosestPlayerInFOV()
+    local closest = nil
+    local shortestDist = fovRadius
+    local screenCenter = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= localPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
+            local headPos, onScreen = camera:WorldToViewportPoint(p.Character.Head.Position)
+            if onScreen then
+                local screenPos = Vector2.new(headPos.X, headPos.Y)
+                local dist = (screenPos - screenCenter).Magnitude
+                if dist < shortestDist then
+                    shortestDist = dist
+                    closest = p.Character.Head
+                end
+            end
+        end
+    end
+    return closest
+end
+
 RunService.RenderStepped:Connect(function()
     pcall(function()
         if successDrawing and fovDrawing then
@@ -431,6 +453,11 @@ RunService.RenderStepped:Connect(function()
                 fovDrawing.Radius = fovRadius
                 fovDrawing.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
                 fovDrawing.Color = currentThemeColor
+
+                local targetHead = getClosestPlayerInFOV()
+                if targetHead then
+                    camera.CFrame = CFrame.new(camera.CFrame.Position, targetHead.Position)
+                end
             else
                 fovDrawing.Visible = false
             end
@@ -438,7 +465,7 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
--- ตั้งค่าหน้า ESP
+-- หน้า ESP
 local espPage = Pages["ESP"]
 local espSettings = { Name = false, Distance = false, Box = false, Tracer = false }
 local espDrawings = {}
@@ -551,62 +578,7 @@ Players.PlayerRemoving:Connect(function(p)
     end
 end)
 
--- ตั้งค่าหน้ากันแบน
-local antibanPage = Pages["กันแบน"]
-local function createToggleRow(parent, labelText, callback)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(1, 0, 0, 40)
-    container.BackgroundTransparency = 1
-    container.Parent = parent
-
-    local label = createLabel(container, labelText)
-    label.Size = UDim2.new(0, 180, 1, 0)
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 60, 0, 28)
-    btn.Position = UDim2.new(1, -60, 0.5, -14)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    btn.Text = "OFF"
-    btn.TextColor3 = Color3.fromRGB(180, 180, 180)
-    btn.TextSize, btn.Font = 12, Enum.Font.GothamBold
-    btn.Parent = container
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-
-    local active = false
-    btn.MouseButton1Click:Connect(function()
-        active = not active
-        btn.Text = active and "ON" or "OFF"
-        btn.BackgroundColor3 = active and currentThemeColor or Color3.fromRGB(40, 40, 40)
-        btn.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
-        pcall(function() callback(active) end)
-    end)
-end
-
-createToggleRow(antibanPage, "ระบบกันแบน (Anti-Ban)", function(state) end)
-createToggleRow(antibanPage, "ระบบกันเตะ (Anti-Kick)", function(state)
-    if state then
-        pcall(function()
-            localPlayer.Idled:Connect(function()
-                local VirtualUser = game:GetService("VirtualUser")
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end)
-        end)
-    end
-end)
-createToggleRow(antibanPage, "ระบบกันกระเด็น (Anti-Knockback)", function(state)
-    RunService.Stepped:Connect(function()
-        pcall(function()
-            if state and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local hrp = localPlayer.Character.HumanoidRootPart
-                hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
-                hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-            end
-        end)
-    end)
-end)
-
--- ตั้งค่าหน้าตั้งค่าสี
+-- หน้าตั้งค่าสี
 local settingPage = Pages["ตั้งค่า"]
 createLabel(settingPage, "เลือกสีธีม UI และโหมด RGB")
 
@@ -623,6 +595,7 @@ colorGrid.CellSize = UDim2.new(0, 40, 0, 40)
 colorGrid.CellPadding = UDim2.new(0, 8, 0, 8)
 colorGrid.Parent = settingPage
 
+-- สร้างช่องเลือกสี
 for _, col in ipairs(colorsList) do
     local cBtn = Instance.new("TextButton")
     cBtn.Size = UDim2.new(0, 40, 0, 40)
@@ -666,5 +639,4 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
-print("Shadow Hex Ultimate Complete Edition Loaded Successfully!")
-
+print("Shadow Hex 84 Complete Edition Loaded Successfully!")
