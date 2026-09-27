@@ -1,4 +1,4 @@
--- Shadow Hex X สร้างเรือ (Safe Sound Version)
+-- Shadow Hex X สร้างเรือ (Auto Reset & Safe Sound Version)
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
@@ -11,7 +11,6 @@ if player.PlayerGui:FindFirstChild("ShadowHexBlackScreen") then
     player.PlayerGui.ShadowHexBlackScreen:Destroy()
 end
 
--- บันทึกระดับเสียงแบบปลอดภัย (กัน Error ถ้า SoundService ไม่มี Volume)
 local originalVolume = 0.5
 pcall(function()
     if SoundService and SoundService.Volume then
@@ -33,6 +32,7 @@ local isAutoLoop = false
 
 print("Shadow Hex X Loaded Successfully!")
 
+-- ฟังก์ชันลอยตัวพร้อมระบบจับเวลา 20 วินาที (ถ้ารีเซ็ต/ไม่ถึง จะรีตัวละคร)
 local function flyToTarget(targetPos)
     local character = player.Character
     if not character then return false end
@@ -55,8 +55,21 @@ local function flyToTarget(targetPos)
         tween:Play()
         
         local elapsed = 0
+        local timeoutLimit = 20 -- กำหนดเวลาสูงสุด 20 วินาที
+        
         while elapsed < timeTaken do
             if not isRunning then return false end
+            
+            -- ตรวจสอบว่าใช้เวลาเกิน 20 วิแล้วยังไม่ถึงเป้าหมายไหม
+            if elapsed >= timeoutLimit then
+                humanoid.PlatformStand = false
+                -- สั่งรีเซ็ตตัวละคร
+                if humanoid then
+                    humanoid.Health = 0
+                end
+                return false
+            end
+            
             task.wait(0.1)
             elapsed = elapsed + 0.1
         end
