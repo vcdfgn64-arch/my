@@ -1,10 +1,17 @@
--- Shadow Hex X สร้างเรือ (พร้อมระบบหน้าจอดำและปิดเสียงออโต้)
+-- Shadow Hex X สร้างเรือ (Fixed & Optimized)
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local player = Players.LocalPlayer
 
--- บันทึกระดับเสียงเดิมของผู้เล่นก่อนเปิดหน้าจอดำ
+-- ป้องกันรันซ้ำ: ลบ UI เก่าทิ้งก่อนสร้างใหม่
+if player.PlayerGui:FindFirstChild("ShadowHexBoatGui") then
+    player.PlayerGui.ShadowHexBoatGui:Destroy()
+end
+if player.PlayerGui:FindFirstChild("ShadowHexBlackScreen") then
+    player.PlayerGui.ShadowHexBlackScreen:Destroy()
+end
+
 local originalVolume = SoundService.Volume
 
 -- รายการพิกัดเป้าหมาย
@@ -20,10 +27,8 @@ local travelSpeed = 999
 local isRunning = false
 local isAutoLoop = false
 
--- แจ้งเตือนใน Console ว่าสคริปต์โหลดแล้ว
-print("Shadow Hex X สร้างเรือ Loaded Successfully!")
+print("Shadow Hex X Loaded Successfully!")
 
--- ฟังก์ชันสำหรับลอยตัวไปพิกัด
 local function flyToTarget(targetPos)
     local character = player.Character
     if not character then return false end
@@ -65,18 +70,11 @@ local function flyToTarget(targetPos)
     return false
 end
 
--- สร้าง UI หลัก (ปุ่มมินิมอล)
+-- สร้าง UI หลัก
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ShadowHexBoatGui"
 screenGui.ResetOnSpawn = false
-if syn and syn.protect_gui then
-    syn.protect_gui(screenGui)
-    screenGui.Parent = game:GetService("CoreGui")
-elseif gethui then
-    screenGui.Parent = gethui()
-else
-    screenGui.Parent = player:WaitForChild("PlayerGui")
-end
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local actionButton = Instance.new("TextButton")
 actionButton.Size = UDim2.new(0, 45, 0, 45)
@@ -97,7 +95,6 @@ btnStroke.Color = Color3.fromRGB(147, 51, 234)
 btnStroke.Thickness = 2
 btnStroke.Parent = actionButton
 
--- ป้ายชื่อแบรนด์ใต้ปุ่ม
 local brandLabel = Instance.new("TextLabel")
 brandLabel.Size = UDim2.new(0, 100, 0, 20)
 brandLabel.Position = UDim2.new(0.5, -50, 1, 4)
@@ -108,20 +105,13 @@ brandLabel.TextColor3 = Color3.fromRGB(168, 85, 247)
 brandLabel.TextSize = 10
 brandLabel.Parent = actionButton
 
--- สร้าง UI หน้าจอดำ (พร้อมปุ่มยกเลิกตรงกลาง)
+-- สร้าง UI หน้าจอดำ
 local blackScreenGui = Instance.new("ScreenGui")
 blackScreenGui.Name = "ShadowHexBlackScreen"
 blackScreenGui.ResetOnSpawn = false
 blackScreenGui.IgnoreGuiInset = true
 blackScreenGui.Enabled = false 
-if syn and syn.protect_gui then
-    syn.protect_gui(blackScreenGui)
-    blackScreenGui.Parent = game:GetService("CoreGui")
-elseif gethui then
-    blackScreenGui.Parent = gethui()
-else
-    blackScreenGui.Parent = player:WaitForChild("PlayerGui")
-end
+blackScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 local blackFrame = Instance.new("Frame")
 blackFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -134,12 +124,11 @@ blackText.Size = UDim2.new(0, 300, 0, 30)
 blackText.Position = UDim2.new(0.5, -150, 0.5, -50)
 blackText.BackgroundTransparency = 1
 blackText.Font = Enum.Font.GothamMedium
-blackText.Text = "💤 Shadow Hex X [สร้างเรือ AFK Mode (ปิดเสียง)]"
+blackText.Text = "💤 Shadow Hex X [AFK Mode]"
 blackText.TextColor3 = Color3.fromRGB(120, 120, 120)
 blackText.TextSize = 14
 blackText.Parent = blackFrame
 
--- ปุ่มยกเลิกหน้าจอดำ
 local cancelBlackButton = Instance.new("TextButton")
 cancelBlackButton.Size = UDim2.new(0, 180, 0, 45)
 cancelBlackButton.Position = UDim2.new(0.5, -90, 0.5, 10)
@@ -159,20 +148,17 @@ cancelStroke.Color = Color3.fromRGB(147, 51, 234)
 cancelStroke.Thickness = 1.5
 cancelStroke.Parent = cancelBlackButton
 
--- ฟังก์ชันเปิดหน้าจอดำ (ปิดเสียง)
 local function enableBlackScreen()
-    originalVolume = SoundService.Volume -- บันทึกเสียงปัจจุบันไว้ก่อน
-    SoundService.Volume = 0             -- ปิดเสียงเป็น 0
+    originalVolume = SoundService.Volume
+    SoundService.Volume = 0
     blackScreenGui.Enabled = true
 end
 
--- ฟังก์ชันปิดหน้าจอดำ (คืนค่าเสียงเดิม)
 local function disableBlackScreen()
-    SoundService.Volume = originalVolume -- คืนค่าเสียงเดิม
+    SoundService.Volume = originalVolume
     blackScreenGui.Enabled = false
 end
 
--- ฟังก์ชันการทำงานหลัก
 local function runSequence(isAuto)
     if isRunning then return end
     isRunning = true
@@ -182,10 +168,9 @@ local function runSequence(isAuto)
     
     task.spawn(function()
         while isRunning do
-            -- วิ่ง 1 ถึง 4
             for i = 1, #waypoints - 1 do
                 if not isRunning then break end
-                actionButton.Text = i
+                actionButton.Text = tostring(i)
                 local success = flyToTarget(waypoints[i])
                 if not success then break end
                 task.wait(0.2)
@@ -193,21 +178,18 @@ local function runSequence(isAuto)
             
             if not isRunning then break end
             
-            -- จุดที่ 5 (สุดท้าย)
             actionButton.Text = "5"
             local success = flyToTarget(waypoints[#waypoints])
             if not success then break end
             
-            -- ถึงจุดที่ 5: รอ 17 วินาที
             for sec = 17, 1, -1 do
                 if not isRunning then break end
-                actionButton.Text = sec
+                actionButton.Text = tostring(sec)
                 task.wait(1)
             end
             
             if not isRunning then break end
             
-            -- เงื่อนไขวนลูป
             if isAutoLoop then
                 actionButton.Text = "🔄"
                 task.wait(0.5)
@@ -226,7 +208,6 @@ local function runSequence(isAuto)
     end)
 end
 
--- กดปุ่ม (Manual Mode)
 actionButton.MouseButton1Click:Connect(function()
     if isRunning then
         isRunning = false
@@ -237,15 +218,12 @@ actionButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- กดปุ่มยกเลิกหน้าจอดำ
 cancelBlackButton.MouseButton1Click:Connect(function()
     disableBlackScreen()
 end)
 
--- ระบบดักจับคำสั่งในแชท
 player.Chatted:Connect(function(message)
     local msg = message:lower()
-    
     if msg == "afk go" then
         if not isRunning then
             runSequence(true)
@@ -254,8 +232,6 @@ player.Chatted:Connect(function(message)
         isRunning = false
         actionButton.Text = "🚢"
         actionButton.BackgroundColor3 = Color3.fromRGB(18, 16, 26)
-        
-    -- คำสั่งเปิด/ปิดหน้าจอดำผ่านแชท
     elseif msg == "หน้าจอดำ" then
         enableBlackScreen()
     elseif msg == "หยุดหน้าจอดำ" then
