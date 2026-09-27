@@ -1,0 +1,264 @@
+-- Shadow Hex X สร้างเรือ (พร้อมระบบหน้าจอดำและปิดเสียงออโต้)
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
+local player = Players.LocalPlayer
+
+-- บันทึกระดับเสียงเดิมของผู้เล่นก่อนเปิดหน้าจอดำ
+local originalVolume = SoundService.Volume
+
+-- รายการพิกัดเป้าหมาย
+local waypoints = {
+    Vector3.new(454.66, -9.90, 293.57),
+    Vector3.new(-55.59, 55.16, 350.02),
+    Vector3.new(-37.31, 78.59, 8806.67),
+    Vector3.new(-48.78, -219.91, 8803.70),
+    Vector3.new(-57.16, -315.52, 9495.87)
+}
+
+local travelSpeed = 999 
+local isRunning = false
+local isAutoLoop = false
+
+-- แจ้งเตือนใน Console ว่าสคริปต์โหลดแล้ว
+print("Shadow Hex X สร้างเรือ Loaded Successfully!")
+
+-- ฟังก์ชันสำหรับลอยตัวไปพิกัด
+local function flyToTarget(targetPos)
+    local character = player.Character
+    if not character then return false end
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    
+    if humanoidRootPart and humanoid then
+        humanoid.PlatformStand = true
+        humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        humanoidRootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        
+        local currentPos = humanoidRootPart.Position
+        local distance = (targetPos - currentPos).Magnitude
+        local timeTaken = distance / travelSpeed
+        
+        if timeTaken < 0.05 then
+            timeTaken = 0.05
+        end
+        
+        local tweenInfo = TweenInfo.new(
+            timeTaken,
+            Enum.EasingStyle.Linear,
+            Enum.EasingDirection.InOut
+        )
+        
+        local tween = TweenService:Create(humanoidRootPart, tweenInfo, {CFrame = CFrame.new(targetPos)})
+        tween:Play()
+        
+        local elapsed = 0
+        while elapsed < timeTaken do
+            if not isRunning then return false end
+            task.wait(0.1)
+            elapsed = elapsed + 0.1
+        end
+        
+        humanoid.PlatformStand = false
+        return true
+    end
+    return false
+end
+
+-- สร้าง UI หลัก (ปุ่มมินิมอล)
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ShadowHexBoatGui"
+screenGui.ResetOnSpawn = false
+if syn and syn.protect_gui then
+    syn.protect_gui(screenGui)
+    screenGui.Parent = game:GetService("CoreGui")
+elseif gethui then
+    screenGui.Parent = gethui()
+else
+    screenGui.Parent = player:WaitForChild("PlayerGui")
+end
+
+local actionButton = Instance.new("TextButton")
+actionButton.Size = UDim2.new(0, 45, 0, 45)
+actionButton.Position = UDim2.new(0.9, -50, 0.4, 0)
+actionButton.BackgroundColor3 = Color3.fromRGB(18, 16, 26)
+actionButton.Font = Enum.Font.GothamBold
+actionButton.Text = "🚢"
+actionButton.TextColor3 = Color3.fromRGB(216, 180, 254)
+actionButton.TextSize = 18
+actionButton.Parent = screenGui
+
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 10)
+btnCorner.Parent = actionButton
+
+local btnStroke = Instance.new("UIStroke")
+btnStroke.Color = Color3.fromRGB(147, 51, 234)
+btnStroke.Thickness = 2
+btnStroke.Parent = actionButton
+
+-- ป้ายชื่อแบรนด์ใต้ปุ่ม
+local brandLabel = Instance.new("TextLabel")
+brandLabel.Size = UDim2.new(0, 100, 0, 20)
+brandLabel.Position = UDim2.new(0.5, -50, 1, 4)
+brandLabel.BackgroundTransparency = 1
+brandLabel.Font = Enum.Font.GothamBold
+brandLabel.Text = "Shadow Hex X"
+brandLabel.TextColor3 = Color3.fromRGB(168, 85, 247)
+brandLabel.TextSize = 10
+brandLabel.Parent = actionButton
+
+-- สร้าง UI หน้าจอดำ (พร้อมปุ่มยกเลิกตรงกลาง)
+local blackScreenGui = Instance.new("ScreenGui")
+blackScreenGui.Name = "ShadowHexBlackScreen"
+blackScreenGui.ResetOnSpawn = false
+blackScreenGui.IgnoreGuiInset = true
+blackScreenGui.Enabled = false 
+if syn and syn.protect_gui then
+    syn.protect_gui(blackScreenGui)
+    blackScreenGui.Parent = game:GetService("CoreGui")
+elseif gethui then
+    blackScreenGui.Parent = gethui()
+else
+    blackScreenGui.Parent = player:WaitForChild("PlayerGui")
+end
+
+local blackFrame = Instance.new("Frame")
+blackFrame.Size = UDim2.new(1, 0, 1, 0)
+blackFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+blackFrame.BorderSizePixel = 0
+blackFrame.Parent = blackScreenGui
+
+local blackText = Instance.new("TextLabel")
+blackText.Size = UDim2.new(0, 300, 0, 30)
+blackText.Position = UDim2.new(0.5, -150, 0.5, -50)
+blackText.BackgroundTransparency = 1
+blackText.Font = Enum.Font.GothamMedium
+blackText.Text = "💤 Shadow Hex X [สร้างเรือ AFK Mode (ปิดเสียง)]"
+blackText.TextColor3 = Color3.fromRGB(120, 120, 120)
+blackText.TextSize = 14
+blackText.Parent = blackFrame
+
+-- ปุ่มยกเลิกหน้าจอดำ
+local cancelBlackButton = Instance.new("TextButton")
+cancelBlackButton.Size = UDim2.new(0, 180, 0, 45)
+cancelBlackButton.Position = UDim2.new(0.5, -90, 0.5, 10)
+cancelBlackButton.BackgroundColor3 = Color3.fromRGB(30, 27, 46)
+cancelBlackButton.Font = Enum.Font.GothamBold
+cancelBlackButton.Text = "❌ ออกจากหน้าจอดำ"
+cancelBlackButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+cancelBlackButton.TextSize = 14
+cancelBlackButton.Parent = blackFrame
+
+local cancelCorner = Instance.new("UICorner")
+cancelCorner.CornerRadius = UDim.new(0, 8)
+cancelCorner.Parent = cancelBlackButton
+
+local cancelStroke = Instance.new("UIStroke")
+cancelStroke.Color = Color3.fromRGB(147, 51, 234)
+cancelStroke.Thickness = 1.5
+cancelStroke.Parent = cancelBlackButton
+
+-- ฟังก์ชันเปิดหน้าจอดำ (ปิดเสียง)
+local function enableBlackScreen()
+    originalVolume = SoundService.Volume -- บันทึกเสียงปัจจุบันไว้ก่อน
+    SoundService.Volume = 0             -- ปิดเสียงเป็น 0
+    blackScreenGui.Enabled = true
+end
+
+-- ฟังก์ชันปิดหน้าจอดำ (คืนค่าเสียงเดิม)
+local function disableBlackScreen()
+    SoundService.Volume = originalVolume -- คืนค่าเสียงเดิม
+    blackScreenGui.Enabled = false
+end
+
+-- ฟังก์ชันการทำงานหลัก
+local function runSequence(isAuto)
+    if isRunning then return end
+    isRunning = true
+    isAutoLoop = isAuto
+    
+    actionButton.BackgroundColor3 = Color3.fromRGB(88, 28, 135)
+    
+    task.spawn(function()
+        while isRunning do
+            -- วิ่ง 1 ถึง 4
+            for i = 1, #waypoints - 1 do
+                if not isRunning then break end
+                actionButton.Text = i
+                local success = flyToTarget(waypoints[i])
+                if not success then break end
+                task.wait(0.2)
+            end
+            
+            if not isRunning then break end
+            
+            -- จุดที่ 5 (สุดท้าย)
+            actionButton.Text = "5"
+            local success = flyToTarget(waypoints[#waypoints])
+            if not success then break end
+            
+            -- ถึงจุดที่ 5: รอ 17 วินาที
+            for sec = 17, 1, -1 do
+                if not isRunning then break end
+                actionButton.Text = sec
+                task.wait(1)
+            end
+            
+            if not isRunning then break end
+            
+            -- เงื่อนไขวนลูป
+            if isAutoLoop then
+                actionButton.Text = "🔄"
+                task.wait(0.5)
+            else
+                actionButton.Text = "✔"
+                actionButton.BackgroundColor3 = Color3.fromRGB(18, 16, 26)
+                isRunning = false
+                break
+            end
+        end
+        
+        if not isRunning and not isAutoLoop then
+            actionButton.Text = "🚢"
+            actionButton.BackgroundColor3 = Color3.fromRGB(18, 16, 26)
+        end
+    end)
+end
+
+-- กดปุ่ม (Manual Mode)
+actionButton.MouseButton1Click:Connect(function()
+    if isRunning then
+        isRunning = false
+        actionButton.Text = "🚢"
+        actionButton.BackgroundColor3 = Color3.fromRGB(18, 16, 26)
+    else
+        runSequence(false)
+    end
+end)
+
+-- กดปุ่มยกเลิกหน้าจอดำ
+cancelBlackButton.MouseButton1Click:Connect(function()
+    disableBlackScreen()
+end)
+
+-- ระบบดักจับคำสั่งในแชท
+player.Chatted:Connect(function(message)
+    local msg = message:lower()
+    
+    if msg == "afk go" then
+        if not isRunning then
+            runSequence(true)
+        end
+    elseif msg == "afk stop" then
+        isRunning = false
+        actionButton.Text = "🚢"
+        actionButton.BackgroundColor3 = Color3.fromRGB(18, 16, 26)
+        
+    -- คำสั่งเปิด/ปิดหน้าจอดำผ่านแชท
+    elseif msg == "หน้าจอดำ" then
+        enableBlackScreen()
+    elseif msg == "หยุดหน้าจอดำ" then
+        disableBlackScreen()
+    end
+end)
