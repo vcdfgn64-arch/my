@@ -1,4 +1,4 @@
--- Shadow Hex X สร้างเรือ (Clean Direct Version)
+-- Shadow Hex X สร้างเรือ (Safe Sound Version)
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
@@ -11,7 +11,13 @@ if player.PlayerGui:FindFirstChild("ShadowHexBlackScreen") then
     player.PlayerGui.ShadowHexBlackScreen:Destroy()
 end
 
-local originalVolume = SoundService.Volume
+-- บันทึกระดับเสียงแบบปลอดภัย (กัน Error ถ้า SoundService ไม่มี Volume)
+local originalVolume = 0.5
+pcall(function()
+    if SoundService and SoundService.Volume then
+        originalVolume = SoundService.Volume
+    end
+end)
 
 local waypoints = {
     Vector3.new(454.66, -9.90, 293.57),
@@ -25,7 +31,7 @@ local travelSpeed = 999
 local isRunning = false
 local isAutoLoop = false
 
-print("Shadow Hex X Loaded Cleanly!")
+print("Shadow Hex X Loaded Successfully!")
 
 local function flyToTarget(targetPos)
     local character = player.Character
@@ -138,13 +144,21 @@ cancelStroke.Thickness = 1.5
 cancelStroke.Parent = cancelBlackButton
 
 local function enableBlackScreen()
-    originalVolume = SoundService.Volume
-    SoundService.Volume = 0
+    pcall(function()
+        if SoundService and SoundService.Volume then
+            originalVolume = SoundService.Volume
+            SoundService.Volume = 0
+        end
+    end)
     blackScreenGui.Enabled = true
 end
 
 local function disableBlackScreen()
-    SoundService.Volume = originalVolume
+    pcall(function()
+        if SoundService and SoundService.Volume then
+            SoundService.Volume = originalVolume
+        end
+    end)
     blackScreenGui.Enabled = false
 end
 
