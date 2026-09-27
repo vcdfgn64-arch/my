@@ -1,4 +1,4 @@
--- Shadow Hex X สร้างเรือ (Auto Reset & Safe Sound Version)
+-- Shadow Hex X สร้างเรือ (22 Min Timeout & Auto Restart Loop Version)
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
@@ -32,7 +32,8 @@ local isAutoLoop = false
 
 print("Shadow Hex X Loaded Successfully!")
 
--- ฟังก์ชันลอยตัวพร้อมระบบจับเวลา 20 วินาที (ถ้ารีเซ็ต/ไม่ถึง จะรีตัวละคร)
+local runSequence
+
 local function flyToTarget(targetPos)
     local character = player.Character
     if not character then return false end
@@ -55,23 +56,22 @@ local function flyToTarget(targetPos)
         tween:Play()
         
         local elapsed = 0
-        local timeoutLimit = 20 -- กำหนดเวลาสูงสุด 20 วินาที
+        local timeoutLimit = 1320 -- 22 นาที (22 * 60 = 1320 วินาที)
         
         while elapsed < timeTaken do
             if not isRunning then return false end
             
-            -- ตรวจสอบว่าใช้เวลาเกิน 20 วิแล้วยังไม่ถึงเป้าหมายไหม
+            -- ถ้าเกิน 22 นาทีแล้วยังไปไม่ถึง สั่งรีเซ็ตตัวละครทันที
             if elapsed >= timeoutLimit then
                 humanoid.PlatformStand = false
-                -- สั่งรีเซ็ตตัวละคร
-                if humanoid then
+                if humanoid and humanoid.Health > 0 then
                     humanoid.Health = 0
                 end
                 return false
             end
             
-            task.wait(0.1)
-            elapsed = elapsed + 0.1
+            task.wait(1)
+            elapsed = elapsed + 1
         end
         
         humanoid.PlatformStand = false
@@ -175,7 +175,7 @@ local function disableBlackScreen()
     blackScreenGui.Enabled = false
 end
 
-local function runSequence(isAuto)
+runSequence = function(isAuto)
     if isRunning then return end
     isRunning = true
     isAutoLoop = isAuto
@@ -224,9 +224,19 @@ local function runSequence(isAuto)
     end)
 end
 
+-- เมื่อตัวละครเกิดใหม่ หากเปิดโหมดออโต้ไว้ จะทำการเริ่มรันลูปใหม่อัตโนมัติทันที
+player.CharacterAdded:Connect(function(newChar)
+    task.wait(2) -- รอโหลดตัวละครใหม่
+    if isAutoLoop then
+        isRunning = false
+        runSequence(true)
+    end
+end)
+
 actionButton.MouseButton1Click:Connect(function()
     if isRunning then
         isRunning = false
+        isAutoLoop = false
         actionButton.Text = "🚢"
         actionButton.BackgroundColor3 = Color3.fromRGB(18, 16, 26)
     else
@@ -244,6 +254,7 @@ player.Chatted:Connect(function(message)
         if not isRunning then runSequence(true) end
     elseif msg == "afk stop" then
         isRunning = false
+        isAutoLoop = false
         actionButton.Text = "🚢"
         actionButton.BackgroundColor3 = Color3.fromRGB(18, 16, 26)
     elseif msg == "หน้าจอดำ" then
