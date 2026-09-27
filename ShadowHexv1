@@ -1,4 +1,4 @@
--- [[ Shadow Hex v 2 - Part 1/2 ]] --
+-- [[ Shadow Hex v 2 - Part 1 ]] --
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -152,12 +152,6 @@ for i, name in ipairs(tabNames) do
 end
 
 local themeStrokes = {MainStroke, MinStroke}
-local function updateTheme(newColor)
-    currentThemeColor = newColor
-    for _, stroke in ipairs(themeStrokes) do
-        if stroke and stroke.Parent then stroke.Color = newColor end
-    end
-end
 
 local function createLabel(parent, text)
     local lbl = Instance.new("TextLabel")
@@ -267,6 +261,140 @@ noclipContainer.BackgroundTransparency = 1
 noclipContainer.Parent = playerPage
 local noclipText = createLabel(noclipContainer, "ทะลุกำแพง (NoClip)")
 noclipText.Size = UDim2.new(0, 150, 1, 0)
+local noclipBtn = Instance.new("TextButton")
+noclipBtn.Size = UDim2.new(0, 60, 0, 28)
+noclipBtn.Position = UDim2.new(1, -60, 0.5, -14)
+noclipBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+noclipBtn.Text = "OFF"
+noclipBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+noclipBtn.TextSize, noclipBtn.Font = 12, Enum.Font.GothamBold
+noclipBtn.Parent = noclipContainer
+Instance.new("UICorner", noclipBtn).CornerRadius = UDim.new(1, 0)
+
+local noclipEnabled = false
+noclipBtn.MouseButton1Click:Connect(function()
+    noclipEnabled = not noclipEnabled
+    noclipBtn.Text = noclipEnabled and "ON" or "OFF"
+    noclipBtn.BackgroundColor3 = noclipEnabled and currentThemeColor or Color3.fromRGB(40, 40, 40)
+    noclipBtn.TextColor3 = noclipEnabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+end)
+
+RunService.Stepped:Connect(function()
+    if noclipEnabled and localPlayer.Character then
+        pcall(function()
+            for _, part in pairs(localPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end)
+    end
+end)
+
+-- หน้าบิน (Fly)
+local flyPage = Pages["บิน"]
+local flyToggleContainer = Instance.new("Frame")
+flyToggleContainer.Size = UDim2.new(1, 0, 0, 40)
+flyToggleContainer.BackgroundTransparency = 1
+flyToggleContainer.Parent = flyPage
+local flyToggleText = createLabel(flyToggleContainer, "โหมดบิน (Fly)")
+flyToggleText.Size = UDim2.new(0, 150, 1, 0)
+
+local flyBtn = Instance.new("TextButton")
+flyBtn.Size = UDim2.new(0, 60, 0, 28)
+flyBtn.Position = UDim2.new(1, -60, 0.5, -14)
+flyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+flyBtn.Text = "OFF"
+flyBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+flyBtn.TextSize, flyBtn.Font = 12, Enum.Font.GothamBold
+flyBtn.Parent = flyToggleContainer
+Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(1, 0)
+
+local flySpeedLabel = createLabel(flyPage, "ความเร็วการบิน: 50")
+local flySpeedBg = createSliderBg(flyPage)
+local flySpeedFill = createSliderFill(flySpeedBg, UDim2.new(50/200, 0, 1, 0))
+local flySpeed = 50
+applySlider(flySpeedBg, flySpeedFill, 10, 200, function(val)
+    flySpeed = val
+    flySpeedLabel.Text = "ความเร็วการบิน: " .. val
+end)
+
+local FlyControllerGui = Instance.new("ScreenGui")
+FlyControllerGui.Name = "ShadowHex_FlyUI"
+FlyControllerGui.ResetOnSpawn = false
+FlyControllerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+FlyControllerGui.Parent = playerGui
+
+local FlyBox = Instance.new("Frame")
+FlyBox.Size = UDim2.new(0, 110, 0, 110)
+FlyBox.Position = UDim2.new(0.8, 0, 0.4, 0)
+FlyBox.BackgroundTransparency = 1
+FlyBox.Active = true
+FlyBox.Draggable = true
+FlyBox.Visible = false
+FlyBox.Parent = FlyControllerGui
+
+local function createPadButton(text, pos)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 48, 0, 48)
+    b.Position = pos
+    b.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
+    b.Text = text
+    b.TextColor3 = currentThemeColor
+    b.TextSize = 22
+    b.Font = Enum.Font.GothamBold
+    b.Parent = FlyBox
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+    local stroke = Instance.new("UIStroke")
+    stroke.Name = "PadStroke"
+    stroke.Color = Color3.fromRGB(55, 55, 60)
+    stroke.Thickness = 1.5
+    stroke.Parent = b
+    table.insert(themeStrokes, stroke)
+    return b
+end
+
+local btnForward  = createPadButton("+", UDim2.new(0, 0, 0, 0))
+local btnUp       = createPadButton("▲", UDim2.new(0, 58, 0, 0))
+local btnBackward = createPadButton("-", UDim2.new(0, 0, 0, 58))
+local btnDown     = createPadButton("▼", UDim2.new(0, 58, 0, 58))
+
+local flyActive = false
+flyBtn.MouseButton1Click:Connect(function()
+    flyActive = not flyActive
+    flyBtn.Text = flyActive and "ON" or "OFF"
+    flyBtn.BackgroundColor3 = flyActive and currentThemeColor or Color3.fromRGB(40, 40, 40)
+    flyBtn.TextColor3 = flyActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+    FlyBox.Visible = flyActive
+end)
+
+local movingStates = {Forward = false, Up = false, Backward = false, Down = false}
+btnForward.MouseButton1Down:Connect(function() movingStates.Forward = true end)
+btnForward.MouseButton1Up:Connect(function() movingStates.Forward = false end)
+btnUp.MouseButton1Down:Connect(function() movingStates.Up = true end)
+btnUp.MouseButton1Up:Connect(function() movingStates.Up = false end)
+btnBackward.MouseButton1Down:Connect(function() movingStates.Backward = true end)
+btnBackward.MouseButton1Up:Connect(function() movingStates.Backward = false end)
+btnDown.MouseButton1Down:Connect(function() movingStates.Down = true end)
+btnDown.MouseButton1Up:Connect(function() movingStates.Down = false end)
+
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        if flyActive and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = localPlayer.Character.HumanoidRootPart
+            local humanoid = localPlayer.Character:FindFirstChild("Humanoid")
+            local camCFrame = camera.CFrame
+            if humanoid then humanoid.PlatformStand = true end
+            local velocity = Vector3.new(0, 0, 0)
+            if movingStates.Forward then velocity = velocity + camCFrame.LookVector end
+            if movingStates.Backward then velocity = velocity - camCFrame.LookVector end
+            if movingStates.Up then velocity = velocity + Vector3.new(0, 1, 0) end
+            if movingStates.Down then velocity = velocity + Vector3.new(0, -1, 0) end
+            hrp.AssemblyLinearVelocity = velocity * flySpeed
+        elseif not flyActive and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+            localPlayer.Character.Humanoid.PlatformStand = false
+        end
+    end)
+end)
+
 local noclipBtn = Instance.new("TextButton")
 noclipBtn.Size = UDim2.new(0, 60, 0, 28)
 noclipBtn.Position = UDim2.new(1, -60, 0.5, -14)
