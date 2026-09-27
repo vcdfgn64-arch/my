@@ -1,10 +1,9 @@
--- Shadow Hex X สร้างเรือ (Fixed & Optimized)
+-- Shadow Hex X สร้างเรือ (Clean Direct Version)
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local player = Players.LocalPlayer
 
--- ป้องกันรันซ้ำ: ลบ UI เก่าทิ้งก่อนสร้างใหม่
 if player.PlayerGui:FindFirstChild("ShadowHexBoatGui") then
     player.PlayerGui.ShadowHexBoatGui:Destroy()
 end
@@ -14,7 +13,6 @@ end
 
 local originalVolume = SoundService.Volume
 
--- รายการพิกัดเป้าหมาย
 local waypoints = {
     Vector3.new(454.66, -9.90, 293.57),
     Vector3.new(-55.59, 55.16, 350.02),
@@ -27,7 +25,7 @@ local travelSpeed = 999
 local isRunning = false
 local isAutoLoop = false
 
-print("Shadow Hex X Loaded Successfully!")
+print("Shadow Hex X Loaded Cleanly!")
 
 local function flyToTarget(targetPos)
     local character = player.Character
@@ -44,16 +42,9 @@ local function flyToTarget(targetPos)
         local distance = (targetPos - currentPos).Magnitude
         local timeTaken = distance / travelSpeed
         
-        if timeTaken < 0.05 then
-            timeTaken = 0.05
-        end
+        if timeTaken < 0.05 then timeTaken = 0.05 end
         
-        local tweenInfo = TweenInfo.new(
-            timeTaken,
-            Enum.EasingStyle.Linear,
-            Enum.EasingDirection.InOut
-        )
-        
+        local tweenInfo = TweenInfo.new(timeTaken, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
         local tween = TweenService:Create(humanoidRootPart, tweenInfo, {CFrame = CFrame.new(targetPos)})
         tween:Play()
         
@@ -70,7 +61,6 @@ local function flyToTarget(targetPos)
     return false
 end
 
--- สร้าง UI หลัก
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ShadowHexBoatGui"
 screenGui.ResetOnSpawn = false
@@ -105,7 +95,6 @@ brandLabel.TextColor3 = Color3.fromRGB(168, 85, 247)
 brandLabel.TextSize = 10
 brandLabel.Parent = actionButton
 
--- สร้าง UI หน้าจอดำ
 local blackScreenGui = Instance.new("ScreenGui")
 blackScreenGui.Name = "ShadowHexBlackScreen"
 blackScreenGui.ResetOnSpawn = false
@@ -225,9 +214,7 @@ end)
 player.Chatted:Connect(function(message)
     local msg = message:lower()
     if msg == "afk go" then
-        if not isRunning then
-            runSequence(true)
-        end
+        if not isRunning then runSequence(true) end
     elseif msg == "afk stop" then
         isRunning = false
         actionButton.Text = "🚢"
