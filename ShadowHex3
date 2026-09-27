@@ -1,0 +1,396 @@
+-- [[ Shadow Hex v 2 - Part 1 ]] --
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+local localPlayer = Players.LocalPlayer
+local playerGui = localPlayer:WaitForChild("PlayerGui")
+local camera = workspace.CurrentCamera
+
+local currentThemeColor = Color3.fromRGB(140, 60, 220)
+local isRGBActive = false
+
+if playerGui:FindFirstChild("ShadowHex_UI") then playerGui.ShadowHex_UI:Destroy() end
+if playerGui:FindFirstChild("ShadowHex_FlyUI") then playerGui.ShadowHex_FlyUI:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ShadowHex_UI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = playerGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 520, 0, 360)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -180)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Name = "MainStroke"
+MainStroke.Color = currentThemeColor
+MainStroke.Thickness = 2
+MainStroke.Parent = MainFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(0, 200, 0, 35)
+TitleLabel.Position = UDim2.new(0, 140, 0, 8)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "Shadow Hex v 2"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 18
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = MainFrame
+
+local TabBar = Instance.new("Frame")
+TabBar.Size = UDim2.new(0, 130, 1, 0)
+TabBar.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+TabBar.BorderSizePixel = 0
+TabBar.Parent = MainFrame
+Instance.new("UICorner", TabBar).CornerRadius = UDim.new(0, 12)
+
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 32, 0, 32)
+MinimizeBtn.Position = UDim2.new(1, -42, 0, 10)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MinimizeBtn.Text = "-"
+MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.TextSize = 20
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.Parent = MainFrame
+Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 8)
+
+local MinStroke = Instance.new("UIStroke")
+MinStroke.Color = currentThemeColor
+MinStroke.Thickness = 1.5
+MinStroke.Parent = MinimizeBtn
+
+local ContentArea = Instance.new("Frame")
+ContentArea.Size = UDim2.new(1, -145, 1, -55)
+ContentArea.Position = UDim2.new(0, 140, 0, 45)
+ContentArea.BackgroundTransparency = 1
+ContentArea.Parent = MainFrame
+
+local MinimizedTitle = Instance.new("TextLabel")
+MinimizedTitle.Size = UDim2.new(1, -50, 1, 0)
+MinimizedTitle.Position = UDim2.new(0, 12, 0, 0)
+MinimizedTitle.BackgroundTransparency = 1
+MinimizedTitle.Text = "Shadow Hex v 2"
+MinimizedTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizedTitle.TextSize = 14
+MinimizedTitle.Font = Enum.Font.GothamBold
+MinimizedTitle.TextXAlignment = Enum.TextXAlignment.Left
+MinimizedTitle.Visible = false
+MinimizedTitle.Parent = MainFrame
+
+local isMinimized = false
+MinimizeBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        MainFrame:TweenSize(UDim2.new(0, 520, 0, 52), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+        TabBar.Visible = false
+        ContentArea.Visible = false
+        TitleLabel.Visible = false
+        MinimizedTitle.Visible = true
+        MinimizeBtn.Text = "+"
+    else
+        MainFrame:TweenSize(UDim2.new(0, 520, 0, 360), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+        TabBar.Visible = true
+        ContentArea.Visible = true
+        TitleLabel.Visible = true
+        MinimizedTitle.Visible = false
+        MinimizeBtn.Text = "-"
+    end
+end)
+
+local Pages = {}
+local tabNames = {"ตัวเรา", "บิน", "หมุน", "กระเด็น", "FOV", "ESP", "ตั้งค่า"}
+
+for i, name in ipairs(tabNames) do
+    local page = Instance.new("ScrollingFrame")
+    page.Name = name .. "Page"
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    page.Visible = (i == 1)
+    page.Parent = ContentArea
+    Pages[name] = page
+
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    listLayout.Padding = UDim.new(0, 12)
+    listLayout.Parent = page
+
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Size = UDim2.new(1, -12, 0, 32)
+    tabBtn.Position = UDim2.new(0, 6, 0, 8 + (i - 1) * 36)
+    tabBtn.BackgroundColor3 = (i == 1) and Color3.fromRGB(35, 35, 35) or Color3.fromRGB(22, 22, 22)
+    tabBtn.Text = name
+    tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tabBtn.TextSize, tabBtn.Font = 13, Enum.Font.GothamMedium
+    tabBtn.Parent = TabBar
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 8)
+
+    tabBtn.MouseButton1Click:Connect(function()
+        for _, p in pairs(Pages) do p.Visible = false end
+        page.Visible = true
+        for _, b in pairs(TabBar:GetChildren()) do
+            if b:IsA("TextButton") and b ~= MinimizeBtn then
+                b.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+            end
+        end
+        tabBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    end)
+end
+
+local themeStrokes = {MainStroke, MinStroke}
+
+local function createLabel(parent, text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 22)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(230, 230, 230)
+    lbl.TextSize, lbl.Font = 14, Enum.Font.GothamMedium
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = parent
+    return lbl
+end
+
+local function createSliderBg(parent)
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, 0, 0, 8)
+    bg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    bg.BorderSizePixel = 0
+    bg.Parent = parent
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
+    return bg
+end
+
+local function createSliderFill(parent, size)
+    local fill = Instance.new("Frame")
+    fill.Size = size
+    fill.BackgroundColor3 = currentThemeColor
+    fill.BorderSizePixel = 0
+    fill.Parent = parent
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+    return fill
+end
+
+local function applySlider(bg, fill, minVal, maxVal, callback)
+    local dragging = false
+    bg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            local pos = math.clamp((input.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+            fill.Size = UDim2.new(pos, 0, 1, 0)
+            local val = math.floor(minVal + (maxVal - minVal) * pos)
+            callback(val)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local pos = math.clamp((input.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+            fill.Size = UDim2.new(pos, 0, 1, 0)
+            local val = math.floor(minVal + (maxVal - minVal) * pos)
+            callback(val)
+        end
+    end)
+end
+
+-- หน้าตัวเรา
+local playerPage = Pages["ตัวเรา"]
+local currentWalkSpeed = 16
+local currentJumpPower = 50
+
+local speedLabel = createLabel(playerPage, "ความเร็วการเดิน (สูงสุด 400): 16")
+local speedSliderBg = createSliderBg(playerPage)
+local speedSliderFill = createSliderFill(speedSliderBg, UDim2.new(16/400, 0, 1, 0))
+
+local jumpLabel = createLabel(playerPage, "พลังกระโดด (สูงสุด 400): 50")
+local jumpSliderBg = createSliderBg(playerPage)
+local jumpSliderFill = createSliderFill(jumpSliderBg, UDim2.new(50/400, 0, 1, 0))
+
+applySlider(speedSliderBg, speedSliderFill, 16, 400, function(val)
+    currentWalkSpeed = val
+    speedLabel.Text = "ความเร็วการเดิน (สูงสุด 400): " .. val
+    pcall(function()
+        if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+            localPlayer.Character.Humanoid.WalkSpeed = val
+        end
+    end)
+end)
+
+applySlider(jumpSliderBg, jumpSliderFill, 50, 400, function(val)
+    currentJumpPower = val
+    jumpLabel.Text = "พลังกระโดด (สูงสุด 400): " .. val
+    pcall(function()
+        if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+            localPlayer.Character.Humanoid.UseJumpPower = true
+            localPlayer.Character.Humanoid.JumpPower = val
+        end
+    end)
+end)
+
+local function setupCharacter(char)
+    local humanoid = char:WaitForChild("Humanoid", 5)
+    if humanoid then
+        humanoid.WalkSpeed = currentWalkSpeed
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = currentJumpPower
+    end
+end
+
+localPlayer.CharacterAdded:Connect(setupCharacter)
+if localPlayer.Character then setupCharacter(localPlayer.Character) end
+
+local noclipContainer = Instance.new("Frame")
+noclipContainer.Size = UDim2.new(1, 0, 0, 40)
+noclipContainer.BackgroundTransparency = 1
+noclipContainer.Parent = playerPage
+local noclipText = createLabel(noclipContainer, "ทะลุกำแพง (NoClip)")
+noclipText.Size = UDim2.new(0, 150, 1, 0)
+local noclipBtn = Instance.new("TextButton")
+noclipBtn.Size = UDim2.new(0, 60, 0, 28)
+noclipBtn.Position = UDim2.new(1, -60, 0.5, -14)
+noclipBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+noclipBtn.Text = "OFF"
+noclipBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+noclipBtn.TextSize, noclipBtn.Font = 12, Enum.Font.GothamBold
+noclipBtn.Parent = noclipContainer
+Instance.new("UICorner", noclipBtn).CornerRadius = UDim.new(1, 0)
+
+local noclipEnabled = false
+noclipBtn.MouseButton1Click:Connect(function()
+    noclipEnabled = not noclipEnabled
+    noclipBtn.Text = noclipEnabled and "ON" or "OFF"
+    noclipBtn.BackgroundColor3 = noclipEnabled and currentThemeColor or Color3.fromRGB(40, 40, 40)
+    noclipBtn.TextColor3 = noclipEnabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+end)
+
+RunService.Stepped:Connect(function()
+    if noclipEnabled and localPlayer.Character then
+        pcall(function()
+            for _, part in pairs(localPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end)
+    end
+end)
+
+-- หน้าบิน (Fly)
+local flyPage = Pages["บิน"]
+local flyToggleContainer = Instance.new("Frame")
+flyToggleContainer.Size = UDim2.new(1, 0, 0, 40)
+flyToggleContainer.BackgroundTransparency = 1
+flyToggleContainer.Parent = flyPage
+local flyToggleText = createLabel(flyToggleContainer, "โหมดบิน (Fly)")
+flyToggleText.Size = UDim2.new(0, 150, 1, 0)
+
+local flyBtn = Instance.new("TextButton")
+flyBtn.Size = UDim2.new(0, 60, 0, 28)
+flyBtn.Position = UDim2.new(1, -60, 0.5, -14)
+flyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+flyBtn.Text = "OFF"
+flyBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+flyBtn.TextSize, flyBtn.Font = 12, Enum.Font.GothamBold
+flyBtn.Parent = flyToggleContainer
+Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(1, 0)
+
+local flySpeedLabel = createLabel(flyPage, "ความเร็วการบิน: 50")
+local flySpeedBg = createSliderBg(flyPage)
+local flySpeedFill = createSliderFill(flySpeedBg, UDim2.new(50/200, 0, 1, 0))
+local flySpeed = 50
+applySlider(flySpeedBg, flySpeedFill, 10, 200, function(val)
+    flySpeed = val
+    flySpeedLabel.Text = "ความเร็วการบิน: " .. val
+end)
+
+local FlyControllerGui = Instance.new("ScreenGui")
+FlyControllerGui.Name = "ShadowHex_FlyUI"
+FlyControllerGui.ResetOnSpawn = false
+FlyControllerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+FlyControllerGui.Parent = playerGui
+
+local FlyBox = Instance.new("Frame")
+FlyBox.Size = UDim2.new(0, 110, 0, 110)
+FlyBox.Position = UDim2.new(0.8, 0, 0.4, 0)
+FlyBox.BackgroundTransparency = 1
+FlyBox.Active = true
+FlyBox.Draggable = true
+FlyBox.Visible = false
+FlyBox.Parent = FlyControllerGui
+
+local function createPadButton(text, pos)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 48, 0, 48)
+    b.Position = pos
+    b.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
+    b.Text = text
+    b.TextColor3 = currentThemeColor
+    b.TextSize = 22
+    b.Font = Enum.Font.GothamBold
+    b.Parent = FlyBox
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+    local stroke = Instance.new("UIStroke")
+    stroke.Name = "PadStroke"
+    stroke.Color = Color3.fromRGB(55, 55, 60)
+    stroke.Thickness = 1.5
+    stroke.Parent = b
+    table.insert(themeStrokes, stroke)
+    return b
+end
+
+local btnForward  = createPadButton("+", UDim2.new(0, 0, 0, 0))
+local btnUp       = createPadButton("▲", UDim2.new(0, 58, 0, 0))
+local btnBackward = createPadButton("-", UDim2.new(0, 0, 0, 58))
+local btnDown     = createPadButton("▼", UDim2.new(0, 58, 0, 58))
+
+local flyActive = false
+flyBtn.MouseButton1Click:Connect(function()
+    flyActive = not flyActive
+    flyBtn.Text = flyActive and "ON" or "OFF"
+    flyBtn.BackgroundColor3 = flyActive and currentThemeColor or Color3.fromRGB(40, 40, 40)
+    flyBtn.TextColor3 = flyActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+    FlyBox.Visible = flyActive
+end)
+
+local movingStates = {Forward = false, Up = false, Backward = false, Down = false}
+btnForward.MouseButton1Down:Connect(function() movingStates.Forward = true end)
+btnForward.MouseButton1Up:Connect(function() movingStates.Forward = false end)
+btnUp.MouseButton1Down:Connect(function() movingStates.Up = true end)
+btnUp.MouseButton1Up:Connect(function() movingStates.Up = false end)
+btnBackward.MouseButton1Down:Connect(function() movingStates.Backward = true end)
+btnBackward.MouseButton1Up:Connect(function() movingStates.Backward = false end)
+btnDown.MouseButton1Down:Connect(function() movingStates.Down = true end)
+btnDown.MouseButton1Up:Connect(function() movingStates.Down = false end)
+
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        if flyActive and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = localPlayer.Character.HumanoidRootPart
+            local humanoid = localPlayer.Character:FindFirstChild("Humanoid")
+            local camCFrame = camera.CFrame
+            if humanoid then humanoid.PlatformStand = true end
+            local velocity = Vector3.new(0, 0, 0)
+            if movingStates.Forward then velocity = velocity + camCFrame.LookVector end
+            if movingStates.Backward then velocity = velocity - camCFrame.LookVector end
+            if movingStates.Up then velocity = velocity + Vector3.new(0, 1, 0) end
+            if movingStates.Down then velocity = velocity + Vector3.new(0, -1, 0) end
+            hrp.AssemblyLinearVelocity = velocity * flySpeed
+        elseif not flyActive and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+            localPlayer.Character.Humanoid.PlatformStand = false
+        end
+    end)
+end)
