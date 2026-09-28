@@ -1,0 +1,249 @@
+-- ==========================================================
+-- SHADOW HEX - Premium Cyber UI (Dark Purple Edition)
+-- ==========================================================
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local LocalPlayer = Players.LocalPlayer
+
+-- ลบ UI เก่าทิ้งเพื่อเคลียร์เคลน
+if CoreGui:FindFirstChild("ShadowHexGui") then
+    CoreGui.ShadowHexGui:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ShadowHexGui"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main Container (หน้าต่างหลัก ดำ-ม่วงเงางาม)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 14, 28)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.15, 0, 0.25, 0)
+MainFrame.Size = UDim2.new(0, 260, 0, 260)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
+
+-- ขอบเรืองแสง (Stroke) สีม่วงนีออน
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Parent = MainFrame
+MainStroke.Color = Color3.fromRGB(130, 50, 230)
+MainStroke.Thickness = 1.8
+MainStroke.Transparency = 0.2
+
+-- Gradient พื้นหลังให้มีมิติ
+local MainGradient = Instance.new("UIGradient")
+MainGradient.Parent = MainFrame
+MainGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 18, 40)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 8, 18))
+})
+MainGradient.Rotation = 45
+
+-- Top Bar (แถบหัวข้อสุดพรีเมียม)
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = MainFrame
+TitleBar.BackgroundColor3 = Color3.fromRGB(35, 22, 60)
+TitleBar.BorderSizePixel = 0
+TitleBar.Size = UDim2.new(1, 0, 0, 42)
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 12)
+TitleCorner.Parent = TitleBar
+
+-- แก้ขอบล่างของ TitleBar ให้ตรง ไม่มน
+local TitleFix = Instance.new("Frame")
+TitleFix.Parent = TitleBar
+TitleFix.BackgroundColor3 = Color3.fromRGB(35, 22, 60)
+TitleFix.BorderSizePixel = 0
+TitleFix.Position = UDim2.new(0, 0, 0.7, 0)
+TitleFix.Size = UDim2.new(1, 0, 0.3, 0)
+
+-- ไอคอน/ข้อความชื่อสคริปต์
+local TitleText = Instance.new("TextLabel")
+TitleText.Parent = TitleBar
+TitleText.BackgroundTransparency = 1
+TitleText.Position = UDim2.new(0, 15, 0, 0)
+TitleText.Size = UDim2.new(1, -30, 1, 0)
+TitleText.Font = Enum.Font.GothamBold
+TitleText.Text = "🔮 SHADOW HEX"
+TitleText.TextColor3 = Color3.fromRGB(220, 150, 255)
+TitleText.TextSize = 15
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+
+-- สถานะย่อยย่อ
+local StatusIndicator = Instance.new("TextLabel")
+StatusIndicator.Parent = TitleBar
+StatusIndicator.BackgroundTransparency = 1
+StatusIndicator.Position = UDim2.new(0, -15, 0, 0)
+StatusIndicator.Size = UDim2.new(1, -15, 1, 0)
+StatusIndicator.Font = Enum.Font.Gotham
+StatusIndicator.Text = "● ACTIVE"
+StatusIndicator.TextColor3 = Color3.fromRGB(80, 255, 120)
+StatusIndicator.TextSize = 11
+StatusIndicator.TextXAlignment = Enum.TextXAlignment.Right
+
+-- ==========================================================
+-- ปุ่มที่ 1: Toggle Wave State
+-- ==========================================================
+local ToggleWaveButton = Instance.new("TextButton")
+ToggleWaveButton.Name = "ToggleWaveButton"
+ToggleWaveButton.Parent = MainFrame
+ToggleWaveButton.BackgroundColor3 = Color3.fromRGB(45, 28, 75)
+ToggleWaveButton.Position = UDim2.new(0.07, 0, 0.23, 0)
+ToggleWaveButton.Size = UDim2.new(0, 222, 0, 44)
+ToggleWaveButton.AutoButtonColor = false
+ToggleWaveButton.Font = Enum.Font.GothamBold
+ToggleWaveButton.Text = "⚡ Toggle Wave State"
+ToggleWaveButton.TextColor3 = Color3.fromRGB(240, 210, 255)
+ToggleWaveButton.TextSize = 13
+
+local WaveCorner = Instance.new("UICorner")
+WaveCorner.CornerRadius = UDim.new(0, 8)
+WaveCorner.Parent = ToggleWaveButton
+
+local WaveStroke = Instance.new("UIStroke")
+WaveStroke.Parent = ToggleWaveButton
+WaveStroke.Color = Color3.fromRGB(140, 70, 220)
+WaveStroke.Transparency = 0.5
+
+ToggleWaveButton.MouseButton1Click:Connect(function()
+    pcall(function()
+        ReplicatedStorage:WaitForChild("Events"):WaitForChild("ToggleWaveState"):FireServer()
+    end)
+    -- เอฟเฟกต์กดปุ่มกระพริบ
+    ToggleWaveButton.BackgroundColor3 = Color3.fromRGB(80, 40, 130)
+    task.delay(0.15, function()
+        ToggleWaveButton.BackgroundColor3 = Color3.fromRGB(45, 28, 75)
+    end)
+end)
+
+-- ==========================================================
+-- ปุ่มที่ 2: Auto Attack Slot 3 (0.1s)
+-- ==========================================================
+local AutoAttackButton = Instance.new("TextButton")
+AutoAttackButton.Name = "AutoAttackButton"
+AutoAttackButton.Parent = MainFrame
+AutoAttackButton.BackgroundColor3 = Color3.fromRGB(60, 20, 35)
+AutoAttackButton.Position = UDim2.new(0.07, 0, 0.44, 0)
+AutoAttackButton.Size = UDim2.new(0, 222, 0, 44)
+AutoAttackButton.AutoButtonColor = false
+AutoAttackButton.Font = Enum.Font.GothamBold
+AutoAttackButton.Text = "⚔️ Auto Attack (Slot 3): OFF"
+AutoAttackButton.TextColor3 = Color3.fromRGB(255, 170, 170)
+AutoAttackButton.TextSize = 12
+
+local AttackCorner = Instance.new("UICorner")
+AttackCorner.CornerRadius = UDim.new(0, 8)
+AttackCorner.Parent = AutoAttackButton
+
+local AttackStroke = Instance.new("UIStroke")
+AttackStroke.Parent = AutoAttackButton
+AttackStroke.Color = Color3.fromRGB(200, 50, 80)
+AttackStroke.Transparency = 0.5
+
+local autoAttackEnabled = false
+
+AutoAttackButton.MouseButton1Click:Connect(function()
+    autoAttackEnabled = not autoAttackEnabled
+    
+    if autoAttackEnabled then
+        AutoAttackButton.Text = "⚔️ Auto Attack (Slot 3): ON"
+        AutoAttackButton.BackgroundColor3 = Color3.fromRGB(20, 70, 40)
+        AutoAttackButton.TextColor3 = Color3.fromRGB(170, 255, 190)
+        AttackStroke.Color = Color3.fromRGB(50, 200, 100)
+    else
+        AutoAttackButton.Text = "⚔️ Auto Attack (Slot 3): OFF"
+        AutoAttackButton.BackgroundColor3 = Color3.fromRGB(60, 20, 35)
+        AutoAttackButton.TextColor3 = Color3.fromRGB(255, 170, 170)
+        AttackStroke.Color = Color3.fromRGB(200, 50, 80)
+    end
+end)
+
+-- ==========================================================
+-- ข้อมูลสถานะด้านล่างสุด (Footer Info)
+-- ==========================================================
+local FooterFrame = Instance.new("Frame")
+FooterFrame.Parent = MainFrame
+FooterFrame.BackgroundColor3 = Color3.fromRGB(12, 9, 20)
+FooterFrame.BorderSizePixel = 0
+FooterFrame.Position = UDim2.new(0.07, 0, 0.68, 0)
+FooterFrame.Size = UDim2.new(0, 222, 0, 65)
+
+local FooterCorner = Instance.new("UICorner")
+FooterCorner.CornerRadius = UDim.new(0, 8)
+FooterCorner.Parent = FooterFrame
+
+local FooterStroke = Instance.new("UIStroke")
+FooterStroke.Parent = FooterFrame
+FooterStroke.Color = Color3.fromRGB(50, 35, 80)
+FooterStroke.Transparency = 0.5
+
+local InfoLabel1 = Instance.new("TextLabel")
+InfoLabel1.Parent = FooterFrame
+InfoLabel1.BackgroundTransparency = 1
+InfoLabel1.Position = UDim2.new(0, 10, 0, 8)
+InfoLabel1.Size = UDim2.new(1, -20, 0, 20)
+InfoLabel1.Font = Enum.Font.Gotham
+InfoLabel1.Text = "⚡ Speed: 0.1s Interval"
+InfoLabel1.TextColor3 = Color3.fromRGB(160, 140, 200)
+InfoLabel1.TextSize = 11
+InfoLabel1.TextXAlignment = Enum.TextXAlignment.Left
+
+local InfoLabel2 = Instance.new("TextLabel")
+InfoLabel2.Parent = FooterFrame
+InfoLabel2.BackgroundTransparency = 1
+InfoLabel2.Position = UDim2.new(0, 10, 0, 32)
+InfoLabel2.Size = UDim2.new(1, -20, 0, 20)
+InfoLabel2.Font = Enum.Font.Gotham
+InfoLabel2.Text = "🎒 Target: Slot 3 (Wooden Sword)"
+InfoLabel2.TextColor3 = Color3.fromRGB(160, 140, 200)
+InfoLabel2.TextSize = 11
+InfoLabel2.TextXAlignment = Enum.TextXAlignment.Left
+
+-- ==========================================================
+-- ระบบรันลูปโจมตี 0.1s + ดึงไอเทมช่อง 3 อัตโนมัติ
+-- ==========================================================
+task.spawn(function()
+    while true do
+        if autoAttackEnabled then
+            pcall(function()
+                local char = LocalPlayer.Character
+                local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+                
+                -- ดึงดาบไม้มาถือหากอยู่ในกระเป๋า
+                if char and not char:FindFirstChild("Wooden Sword") then
+                    if backpack then
+                        local swordInPack = backpack:FindFirstChild("Wooden Sword")
+                        if swordInPack then
+                            swordInPack.Parent = char
+                        end
+                    end
+                end
+
+                -- จำลองกดปุ่มเลข 3 เพื่อสลับช่องไอเทม
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Three, false, game)
+                task.wait(0.02)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Three, false, game)
+
+                -- ยิง Event โจมตีรัวๆ
+                local sword = char and char:FindFirstChild("Wooden Sword")
+                if sword then
+                    local args = { sword }
+                    ReplicatedStorage:WaitForChild("Events"):WaitForChild("SwordHitEvent"):FireServer(unpack(args))
+                end
+            end)
+        end
+        task.wait(0.1)
+    end
+end)
