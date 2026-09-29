@@ -1,0 +1,294 @@
+-- ==========================================
+-- Script by: Shadow Hex
+-- Server Hopper (Auto Teleport to Low Player Server)
+-- ==========================================
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+local PlaceId = game.PlaceId
+local isRunning = true
+local pagesChecked = 0
+
+-- [ฟังก์ชัน] สร้าง UI โหลดเปอร์เซ็นต์ (1-100%)
+local function createLoadingUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ShadowHex_LoadingUI"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = CoreGui
+
+    local fullScreenBg = Instance.new("Frame")
+    fullScreenBg.Size = UDim2.new(1, 0, 1, 0)
+    fullScreenBg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    fullScreenBg.BackgroundTransparency = 0.5
+    fullScreenBg.BorderSizePixel = 0
+    fullScreenBg.Parent = screenGui
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 380, 0, 180)
+    mainFrame.Position = UDim2.new(0.5, -190, 0.5, -90)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = fullScreenBg
+    
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 16)
+    uiCorner.Parent = mainFrame
+
+    local uiGradient = Instance.new("UIGradient")
+    uiGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(170, 0, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 80, 255)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(170, 0, 255))
+    }
+    uiGradient.Rotation = 45
+    uiGradient.Parent = mainFrame
+
+    local uiStroke = Instance.new("UIStroke")
+    uiStroke.Color = Color3.fromRGB(255, 255, 255)
+    uiStroke.Thickness = 3
+    uiStroke.Transparency = 0.2
+    uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    uiStroke.Parent = mainFrame
+
+    local innerFrame = Instance.new("Frame")
+    innerFrame.Size = UDim2.new(1, -6, 1, -6)
+    innerFrame.Position = UDim2.new(0, 3, 0, 3)
+    innerFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+    innerFrame.BorderSizePixel = 0
+    innerFrame.Parent = mainFrame
+    
+    local innerCorner = Instance.new("UICorner")
+    innerCorner.CornerRadius = UDim.new(0, 14)
+    innerCorner.Parent = innerFrame
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, 0, 0, 30)
+    titleLabel.Position = UDim2.new(0, 0, 0, 20)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.TextColor3 = Color3.fromRGB(200, 100, 255)
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Text = "⚡ SHADOW HEX SYSTEM ⚡"
+    titleLabel.Parent = innerFrame
+
+    local percentLabel = Instance.new("TextLabel")
+    percentLabel.Size = UDim2.new(1, 0, 0, 30)
+    percentLabel.Position = UDim2.new(0, 0, 0, 55)
+    percentLabel.BackgroundTransparency = 1
+    percentLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
+    percentLabel.TextSize = 18
+    percentLabel.Font = Enum.Font.GothamSemibold
+    percentLabel.Text = "กำลังโหลดระบบ... 0%"
+    percentLabel.Parent = innerFrame
+
+    -- พื้นหลังหลอดโหลด (Bar Background)
+    local barBg = Instance.new("Frame")
+    barBg.Size = UDim2.new(0, 320, 0, 14)
+    barBg.Position = UDim2.new(0.5, -160, 0, 115)
+    barBg.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+    barBg.BorderSizePixel = 0
+    barBg.Parent = innerFrame
+
+    local barBgCorner = Instance.new("UICorner")
+    barBgCorner.CornerRadius = UDim.new(1, 0)
+    barBgCorner.Parent = barBg
+
+    -- หลอดวิ่ง (Bar Fill)
+    local barFill = Instance.new("Frame")
+    barFill.Size = UDim2.new(0, 0, 1, 0)
+    barFill.BackgroundColor3 = Color3.fromRGB(200, 50, 255)
+    barFill.BorderSizePixel = 0
+    barFill.Parent = barBg
+
+    local barFillCorner = Instance.new("UICorner")
+    barFillCorner.CornerRadius = UDim.new(1, 0)
+    barFillCorner.Parent = barFill
+
+    local fillGradient = Instance.new("UIGradient")
+    fillGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(150, 0, 255)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(255, 100, 255))
+    }
+    fillGradient.Parent = barFill
+
+    return screenGui, percentLabel, barFill
+end
+
+-- [ฟังก์ชัน] สร้าง UI หลักตอนเริ่มค้นหา
+local function createShadowHexUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ShadowHex_ServerHopperUI"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = CoreGui
+
+    local fullScreenBg = Instance.new("Frame")
+    fullScreenBg.Size = UDim2.new(1, 0, 1, 0)
+    fullScreenBg.Position = UDim2.new(0, 0, 0, 0)
+    fullScreenBg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    fullScreenBg.BackgroundTransparency = 0.5
+    fullScreenBg.BorderSizePixel = 0
+    fullScreenBg.Parent = screenGui
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 380, 0, 220)
+    mainFrame.Position = UDim2.new(0.5, -190, 0.5, -110)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = fullScreenBg
+    
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 16)
+    uiCorner.Parent = mainFrame
+
+    local uiGradient = Instance.new("UIGradient")
+    uiGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(170, 0, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 80, 255)),
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(170, 0, 255))
+    }
+    uiGradient.Rotation = 45
+    uiGradient.Parent = mainFrame
+
+    local uiStroke = Instance.new("UIStroke")
+    uiStroke.Color = Color3.fromRGB(255, 255, 255)
+    uiStroke.Thickness = 3
+    uiStroke.Transparency = 0.2
+    uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    uiStroke.Parent = mainFrame
+
+    local innerFrame = Instance.new("Frame")
+    innerFrame.Size = UDim2.new(1, -6, 1, -6)
+    innerFrame.Position = UDim2.new(0, 3, 0, 3)
+    innerFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+    innerFrame.BorderSizePixel = 0
+    innerFrame.Parent = mainFrame
+    
+    local innerCorner = Instance.new("UICorner")
+    innerCorner.CornerRadius = UDim.new(0, 14)
+    innerCorner.Parent = innerFrame
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, 0, 0, 30)
+    titleLabel.Position = UDim2.new(0, 0, 0, 15)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.TextColor3 = Color3.fromRGB(200, 100, 255)
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Text = "⚡ SHADOW HEX SYSTEM ⚡"
+    titleLabel.Parent = innerFrame
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, -30, 0, 70)
+    textLabel.Position = UDim2.new(0, 15, 0, 50)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
+    textLabel.TextSize = 18
+    textLabel.Font = Enum.Font.GothamSemibold
+    textLabel.TextWrapped = true
+    textLabel.Text = "กำลังเริ่มค้นหาเซิร์ฟเวอร์...\nเปิดไปแล้ว: 0 หน้า"
+    textLabel.Parent = innerFrame
+
+    local cancelButton = Instance.new("TextButton")
+    cancelButton.Size = UDim2.new(0, 160, 0, 42)
+    cancelButton.Position = UDim2.new(0.5, -80, 0, 145)
+    cancelButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+    cancelButton.BorderSizePixel = 0
+    cancelButton.Text = "ยกเลิก"
+    cancelButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    cancelButton.TextSize = 17
+    cancelButton.Font = Enum.Font.GothamBold
+    cancelButton.Parent = innerFrame
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 10)
+    btnCorner.Parent = cancelButton
+    
+    cancelButton.MouseEnter:Connect(function()
+        cancelButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    end)
+    cancelButton.MouseLeave:Connect(function()
+        cancelButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+    end)
+
+    return screenGui, textLabel, cancelButton
+end
+
+-- [กระบวนการทำงานหลัก]
+task.spawn(function()
+    -- 1. สร้างและรันหน้าจอโหลด 1-100% ก่อน
+    local loadingGui, percentLabel, barFill = createLoadingUI()
+    
+    for i = 1, 100 do
+        percentLabel.Text = "กำลังโหลดระบบ Shadow Hex... " .. i .. "%"
+        barFill.Size = UDim2.new(i / 100, 0, 1, 0)
+        task.wait(0.015) -- ความเร็วในการวิ่งของหลอด (ปรับเร็วช้าตรงนี้ได้)
+    end
+    
+    task.wait(0.3)
+    loadingGui:Destroy() -- ลบหน้าจอโหลดทิ้งเมื่อครบ 100%
+
+    -- 2. เปิดหน้าจอหลักและเริ่มระบบ Server Hopper
+    local ui, statusLabel, cancelBtn = createShadowHexUI()
+
+    cancelBtn.MouseButton1Click:Connect(function()
+        isRunning = false
+        statusLabel.Text = "กำลังปิดระบบ Shadow Hex..."
+        task.wait(0.5)
+        if ui then ui:Destroy() end
+    end)
+
+    local cursor = ""
+    while isRunning do
+        pagesChecked = pagesChecked + 1
+        statusLabel.Text = "กำลังหาเซิร์ฟเวอร์คนน้อย...\nเปิดไปแล้ว: " .. pagesChecked .. " หน้า"
+        
+        local url = "https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+        if cursor ~= "" then
+            url = url .. "&cursor=" .. cursor
+        end
+        
+        local success, result = pcall(function()
+            return HttpService:JSONDecode(game:HttpGet(url))
+        end)
+        
+        if success and result and result.data then
+            local targetServer = nil
+            local minPlayers = math.huge
+            
+            for _, server in ipairs(result.data) do
+                if server.playing < minPlayers and server.id ~= game.JobId then
+                    if server.playing < server.maxPlayers then
+                        minPlayers = server.playing
+                        targetServer = server.id
+                    end
+                end
+            end
+            
+            -- เจอหน้าไหนมีคนน้อยกว่าหรือเท่ากับ 3 คน วาปทันที
+            if targetServer and minPlayers <= 3 then
+                statusLabel.Text = "✅ เจอเซิร์ฟเวอร์คนน้อย ("..minPlayers.." คน)\nเปิดไปทั้งหมด " .. pagesChecked .. " หน้า กำลังวาป..."
+                task.wait(0.5)
+                TeleportService:TeleportToPlaceInstance(PlaceId, targetServer, LocalPlayer)
+                isRunning = false
+                break
+            end
+            
+            if result.nextPageCursor then
+                cursor = result.nextPageCursor
+                task.wait(0.8)
+            else
+                cursor = ""
+                task.wait(1)
+            end
+        else
+            statusLabel.Text = "⚠️ เกิดข้อผิดพลาด\nไม่สามารถดึงข้อมูลเซิร์ฟเวอร์ได้"
+            isRunning = false
+            task.wait(3)
+            if ui then ui:Destroy() end
+        end
+    end
+end)
