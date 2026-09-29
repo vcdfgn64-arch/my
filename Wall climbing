@@ -1,0 +1,52 @@
+--[[\
+    Universal Auto-Wall Climb on Jump (Mobile & PC)
+]]--
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+local CLIMB_SPEED = 40  -- ความเร็วในการไต่ขึ้น
+local isClimbing = false
+
+-- ฟังก์ชันเช็คว่ามีกำแพงอยู่ข้างหน้าหรือไม่
+local function CheckWall()
+	local rayOrigin = humanoidRootPart.Position
+	local rayDirection = humanoidRootPart.CFrame.LookVector * 3.5
+	
+	local raycastParams = RaycastParams.new()
+	raycastParams.FilterDescendantsInstances = {character}
+	raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+	
+	local result = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+	if result and result.Instance then
+		return true
+	end
+	return false
+end
+
+-- ลูปเช็คการกระโดดและชนกำแพง
+RunService.Stepped:Connect(function()
+	if not character or not humanoidRootPart or not humanoid then return end
+	
+	-- เงื่อนไข: กำลังกดปุ่มกระโดด (Jump == true) และ ชนกำแพงด้านหน้า
+	if humanoid.Jump and CheckWall() then
+		isClimbing = true
+		-- ลบล้างแรงโน้มถ่วง ดันตัวขึ้นด้านบน
+		humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, CLIMB_SPEED, 0)
+		humanoidRootPart.RotVelocity = Vector3.new(0, 0, 0)
+	else
+		isClimbing = false
+	end
+end)
+
+-- อัปเดตตัวละครเมื่อเกิดใหม่
+player.CharacterAdded:Connect(function(newChar)
+	character = newChar
+	humanoidRootPart = newChar:WaitForChild("HumanoidRootPart")
+	humanoid = newChar:WaitForChild("Humanoid")
+end)
