@@ -1,4 +1,4 @@
--- [[ Shadow Hex v 2 - Part 1/2 ]] --
+-- [[ Shadow Hex v 2 - Part 1 67: Core, Character, Fly & Spin ]] --
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -10,9 +10,52 @@ local camera = workspace.CurrentCamera
 
 local currentThemeColor = Color3.fromRGB(140, 60, 220)
 local isRGBActive = false
+local isFPSActive = false
 
 if playerGui:FindFirstChild("ShadowHex_UI") then playerGui.ShadowHex_UI:Destroy() end
 if playerGui:FindFirstChild("ShadowHex_FlyUI") then playerGui.ShadowHex_FlyUI:Destroy() end
+if playerGui:FindFirstChild("ShadowHex_FPSOverlay") then playerGui.ShadowHex_FPSOverlay:Destroy() end
+
+local FPSGui = Instance.new("ScreenGui")
+FPSGui.Name = "ShadowHex_FPSOverlay"
+FPSGui.ResetOnSpawn = false
+FPSGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+FPSGui.Parent = playerGui
+
+local TopRightFPS = Instance.new("TextLabel")
+TopRightFPS.Name = "TopRightFPS"
+TopRightFPS.Size = UDim2.new(0, 120, 0, 30)
+TopRightFPS.Position = UDim2.new(1, -135, 0, 15)
+TopRightFPS.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+TopRightFPS.BackgroundTransparency = 0.4
+TopRightFPS.Text = "FPS: 0"
+TopRightFPS.TextColor3 = Color3.fromRGB(255, 255, 255)
+TopRightFPS.TextSize = 14
+TopRightFPS.Font = Enum.Font.GothamBold
+TopRightFPS.Visible = false
+TopRightFPS.Parent = FPSGui
+
+Instance.new("UICorner", TopRightFPS).CornerRadius = UDim.new(0, 8)
+local fpsStroke = Instance.new("UIStroke")
+fpsStroke.Color = currentThemeColor
+fpsStroke.Thickness = 1.5
+fpsStroke.Parent = TopRightFPS
+
+task.spawn(function()
+    while true do
+        if isFPSActive then
+            local currentTime = tick()
+            local frameCount = 0
+            while tick() - currentTime < 1 do
+                frameCount = frameCount + 1
+                RunService.RenderStepped:Wait()
+            end
+            TopRightFPS.Text = "FPS: " .. frameCount
+        else
+            task.wait(0.5)
+        end
+    end
+end)
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ShadowHex_UI"
@@ -20,11 +63,12 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = playerGui
 
-local MainFrame = Instance.new("Frame")
+local MainFrame = Instance.new("ImageLabel")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 520, 0, 360)
 MainFrame.Position = UDim2.new(0.5, -260, 0.5, -180)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.Image = "rbxassetid://128047290610837"
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
@@ -42,7 +86,7 @@ TitleLabel.Size = UDim2.new(0, 200, 0, 35)
 TitleLabel.Position = UDim2.new(0, 140, 0, 8)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Text = "Shadow Hex v 2"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
 TitleLabel.TextSize = 18
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -51,6 +95,7 @@ TitleLabel.Parent = MainFrame
 local TabBar = Instance.new("Frame")
 TabBar.Size = UDim2.new(0, 130, 1, 0)
 TabBar.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+TabBar.BackgroundTransparency = 0.3
 TabBar.BorderSizePixel = 0
 TabBar.Parent = MainFrame
 Instance.new("UICorner", TabBar).CornerRadius = UDim.new(0, 12)
@@ -60,7 +105,7 @@ MinimizeBtn.Size = UDim2.new(0, 32, 0, 32)
 MinimizeBtn.Position = UDim2.new(1, -42, 0, 10)
 MinimizeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MinimizeBtn.Text = "-"
-MinimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 MinimizeBtn.TextSize = 20
 MinimizeBtn.Font = Enum.Font.GothamBold
 MinimizeBtn.Parent = MainFrame
@@ -82,7 +127,7 @@ MinimizedTitle.Size = UDim2.new(1, -50, 1, 0)
 MinimizedTitle.Position = UDim2.new(0, 12, 0, 0)
 MinimizedTitle.BackgroundTransparency = 1
 MinimizedTitle.Text = "Shadow Hex v 2"
-MinimizedTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizedTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
 MinimizedTitle.TextSize = 14
 MinimizedTitle.Font = Enum.Font.GothamBold
 MinimizedTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -133,8 +178,9 @@ for i, name in ipairs(tabNames) do
     tabBtn.Size = UDim2.new(1, -12, 0, 32)
     tabBtn.Position = UDim2.new(0, 6, 0, 8 + (i - 1) * 36)
     tabBtn.BackgroundColor3 = (i == 1) and Color3.fromRGB(35, 35, 35) or Color3.fromRGB(22, 22, 22)
+    tabBtn.BackgroundTransparency = 0.2
     tabBtn.Text = name
-    tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tabBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
     tabBtn.TextSize, tabBtn.Font = 13, Enum.Font.GothamMedium
     tabBtn.Parent = TabBar
     Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 8)
@@ -151,7 +197,7 @@ for i, name in ipairs(tabNames) do
     end)
 end
 
-local themeStrokes = {MainStroke, MinStroke}
+local themeStrokes = {MainStroke, MinStroke, fpsStroke}
 local sliderFillsList = {}
 
 local function updateTheme(newColor)
@@ -176,7 +222,7 @@ local function createLabel(parent, text)
     lbl.Size = UDim2.new(1, 0, 0, 22)
     lbl.BackgroundTransparency = 1
     lbl.Text = text
-    lbl.TextColor3 = Color3.fromRGB(230, 230, 230)
+    lbl.TextColor3 = Color3.fromRGB(0, 0, 0)
     lbl.TextSize, lbl.Font = 14, Enum.Font.GothamMedium
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Parent = parent
@@ -187,6 +233,7 @@ local function createSliderBg(parent)
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(1, 0, 0, 8)
     bg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    bg.BackgroundTransparency = 0.3
     bg.BorderSizePixel = 0
     bg.Parent = parent
     Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
@@ -266,7 +313,7 @@ noclipBtn.Size = UDim2.new(0, 60, 0, 28)
 noclipBtn.Position = UDim2.new(1, -60, 0.5, -14)
 noclipBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 noclipBtn.Text = "OFF"
-noclipBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+noclipBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 noclipBtn.TextSize, noclipBtn.Font = 12, Enum.Font.GothamBold
 noclipBtn.Parent = noclipContainer
 Instance.new("UICorner", noclipBtn).CornerRadius = UDim.new(1, 0)
@@ -276,7 +323,7 @@ noclipBtn.MouseButton1Click:Connect(function()
     noclipEnabled = not noclipEnabled
     noclipBtn.Text = noclipEnabled and "ON" or "OFF"
     noclipBtn.BackgroundColor3 = noclipEnabled and currentThemeColor or Color3.fromRGB(40, 40, 40)
-    noclipBtn.TextColor3 = noclipEnabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+    noclipBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 end)
 
 RunService.Stepped:Connect(function()
@@ -287,7 +334,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- หน้าบิน
+-- หน้าบิน (ลอยค้างไม่ตก)
 local flyPage = Pages["บิน"]
 local flyToggleContainer = Instance.new("Frame")
 flyToggleContainer.Size = UDim2.new(1, 0, 0, 40)
@@ -300,7 +347,7 @@ flyBtn.Size = UDim2.new(0, 60, 0, 28)
 flyBtn.Position = UDim2.new(1, -60, 0.5, -14)
 flyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 flyBtn.Text = "OFF"
-flyBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+flyBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 flyBtn.TextSize, flyBtn.Font = 12, Enum.Font.GothamBold
 flyBtn.Parent = flyToggleContainer
 Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(1, 0)
@@ -355,7 +402,7 @@ flyBtn.MouseButton1Click:Connect(function()
     flyActive = not flyActive
     flyBtn.Text = flyActive and "ON" or "OFF"
     flyBtn.BackgroundColor3 = flyActive and currentThemeColor or Color3.fromRGB(40, 40, 40)
-    flyBtn.TextColor3 = flyActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+    flyBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
     FlyBox.Visible = flyActive
 end)
 
@@ -376,12 +423,18 @@ RunService.RenderStepped:Connect(function()
             local humanoid = localPlayer.Character:FindFirstChild("Humanoid")
             local camCFrame = camera.CFrame
             if humanoid then humanoid.PlatformStand = true end
+            
             local velocity = Vector3.new(0, 0, 0)
             if movingStates.Forward then velocity = velocity + camCFrame.LookVector end
             if movingStates.Backward then velocity = velocity - camCFrame.LookVector end
             if movingStates.Up then velocity = velocity + Vector3.new(0, 1, 0) end
             if movingStates.Down then velocity = velocity + Vector3.new(0, -1, 0) end
-            hrp.AssemblyLinearVelocity = velocity * flySpeed
+            
+            if velocity.Magnitude > 0 then
+                hrp.AssemblyLinearVelocity = velocity * flySpeed
+            else
+                hrp.AssemblyLinearVelocity = Vector3.new(0, 0.1, 0)
+            end
         elseif not flyActive and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
             localPlayer.Character.Humanoid.PlatformStand = false
         end
@@ -401,7 +454,7 @@ spinBtn.Size = UDim2.new(0, 60, 0, 28)
 spinBtn.Position = UDim2.new(1, -60, 0.5, -14)
 spinBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 spinBtn.Text = "OFF"
-spinBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+spinBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 spinBtn.TextSize, spinBtn.Font = 12, Enum.Font.GothamBold
 spinBtn.Parent = spinToggleContainer
 Instance.new("UICorner", spinBtn).CornerRadius = UDim.new(1, 0)
@@ -417,7 +470,7 @@ spinBtn.MouseButton1Click:Connect(function()
     spinActive = not spinActive
     spinBtn.Text = spinActive and "ON" or "OFF"
     spinBtn.BackgroundColor3 = spinActive and currentThemeColor or Color3.fromRGB(40, 40, 40)
-    spinBtn.TextColor3 = spinActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+    spinBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 end)
 
 RunService.RenderStepped:Connect(function()
@@ -429,7 +482,84 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 print("Shadow Hex v 2 - Part 1 Loaded Successfully!")
--- [[ Shadow Hex v 2 - Part 2/2 ]] --
+-- [[ Shadow Hex v 2 - Part 2: Fling, FOV, ESP & Settings ]] --
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+local localPlayer = Players.LocalPlayer
+local playerGui = localPlayer:WaitForChild("PlayerGui")
+local camera = workspace.CurrentCamera
+
+-- ค้นหาหน้าต่าง UI หลักที่สร้างไว้จากพาร์ทแรก
+local ScreenGui = playerGui:WaitForChild("ShadowHex_UI")
+local MainFrame = ScreenGui:WaitForChild("MainFrame")
+local ContentArea = MainFrame:WaitForChild("ContentArea")
+
+local Pages = {}
+for _, name in ipairs({"ตัวเรา", "บิน", "หมุน", "กระเด็น", "FOV", "ESP", "ตั้งค่า"}) do
+    Pages[name] = ContentArea:WaitForChild(name .. "Page")
+end
+
+local currentThemeColor = Color3.fromRGB(140, 60, 220)
+local isRGBActive = false
+local isFPSActive = false
+
+local function createLabel(parent, text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 22)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(0, 0, 0)
+    lbl.TextSize, lbl.Font = 14, Enum.Font.GothamMedium
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = parent
+    return lbl
+end
+
+local function createSliderBg(parent)
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, 0, 0, 8)
+    bg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    bg.BackgroundTransparency = 0.3
+    bg.BorderSizePixel = 0
+    bg.Parent = parent
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
+    return bg
+end
+
+local function createSliderFill(parent, size)
+    local fill = Instance.new("Frame")
+    fill.Size = size
+    fill.BackgroundColor3 = currentThemeColor
+    fill.BorderSizePixel = 0
+    fill.Parent = parent
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
+    return fill
+end
+
+local function applySlider(bg, fill, minVal, maxVal, callback)
+    local dragging = false
+    bg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            local pos = math.clamp((input.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+            fill.Size = UDim2.new(pos, 0, 1, 0)
+            callback(math.floor(minVal + (maxVal - minVal) * pos))
+        end
+    end)
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
+    end)
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local pos = math.clamp((input.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+            fill.Size = UDim2.new(pos, 0, 1, 0)
+            callback(math.floor(minVal + (maxVal - minVal) * pos))
+        end
+    end)
+end
+
 -- หน้ากระเด็น
 local flingPage = Pages["กระเด็น"]
 createLabel(flingPage, "เลือกผู้เล่นเป้าหมายเพื่อส่งแรงกระแทกฟิสิกส์")
@@ -438,8 +568,9 @@ local selectedTargetName = nil
 local targetDropdownBtn = Instance.new("TextButton")
 targetDropdownBtn.Size = UDim2.new(1, 0, 0, 36)
 targetDropdownBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+targetDropdownBtn.BackgroundTransparency = 0.3
 targetDropdownBtn.Text = "คลิกเพื่อเลือกเป้าหมาย (ทั้งหมด)"
-targetDropdownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+targetDropdownBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 targetDropdownBtn.TextSize, targetDropdownBtn.Font = 13, Enum.Font.GothamMedium
 targetDropdownBtn.Parent = flingPage
 Instance.new("UICorner", targetDropdownBtn).CornerRadius = UDim.new(0, 8)
@@ -467,7 +598,7 @@ local function updateTargetList()
             pBtn.Size = UDim2.new(1, 0, 0, 28)
             pBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
             pBtn.Text = p.Name
-            pBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            pBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
             pBtn.TextSize, pBtn.Font = 12, Enum.Font.Gotham
             pBtn.Parent = targetListFrame
             Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 6)
@@ -495,7 +626,7 @@ local flingActionBtn = Instance.new("TextButton")
 flingActionBtn.Size = UDim2.new(1, 0, 0, 42)
 flingActionBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
 flingActionBtn.Text = "เริ่มอัดกระแทกเป้าหมาย (Fling)"
-flingActionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+flingActionBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 flingActionBtn.TextSize, flingActionBtn.Font = 14, Enum.Font.GothamBold
 flingActionBtn.Parent = flingPage
 Instance.new("UICorner", flingActionBtn).CornerRadius = UDim.new(0, 8)
@@ -544,7 +675,7 @@ fovToggleBtn.Size = UDim2.new(0, 60, 0, 28)
 fovToggleBtn.Position = UDim2.new(1, -60, 0.5, -14)
 fovToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 fovToggleBtn.Text = "OFF"
-fovToggleBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+fovToggleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 fovToggleBtn.TextSize, fovToggleBtn.Font = 12, Enum.Font.GothamBold
 fovToggleBtn.Parent = fovToggleContainer
 Instance.new("UICorner", fovToggleBtn).CornerRadius = UDim.new(1, 0)
@@ -554,7 +685,7 @@ fovToggleBtn.MouseButton1Click:Connect(function()
     fovEnabled = not fovEnabled
     fovToggleBtn.Text = fovEnabled and "ON" or "OFF"
     fovToggleBtn.BackgroundColor3 = fovEnabled and currentThemeColor or Color3.fromRGB(40, 40, 40)
-    fovToggleBtn.TextColor3 = fovEnabled and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+    fovToggleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 end)
 
 local fovLabel = createLabel(fovPage, "รัศมี FOV: 100")
@@ -623,7 +754,7 @@ for _, optionName in ipairs({"ชื่อ (Name)", "ระยะ (Distance)", "
     btn.Position = UDim2.new(1, -60, 0.5, -14)
     btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     btn.Text = "OFF"
-    btn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    btn.TextColor3 = Color3.fromRGB(0, 0, 0)
     btn.TextSize, btn.Font = 12, Enum.Font.GothamBold
     btn.Parent = container
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
@@ -633,7 +764,7 @@ for _, optionName in ipairs({"ชื่อ (Name)", "ระยะ (Distance)", "
         active = not active
         btn.Text = active and "ON" or "OFF"
         btn.BackgroundColor3 = active and currentThemeColor or Color3.fromRGB(40, 40, 40)
-        btn.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
+        btn.TextColor3 = Color3.fromRGB(0, 0, 0)
         if optionName:find("ชื่อ") then espSettings.Name = active
         elseif optionName:find("ระยะ") then espSettings.Distance = active
         elseif optionName:find("ขอบ") then espSettings.Box = active
@@ -686,7 +817,7 @@ RunService.RenderStepped:Connect(function()
                             end
                             drawings.Name.Text = textDisplay
                             drawings.Name.Position = Vector2.new(vector.X, headVec.Y - 18)
-                            drawings.Name.Color = Color3.fromRGB(255, 255, 255)
+                            drawings.Name.Color = Color3.fromRGB(0, 0, 0)
                         elseif drawings.Name then drawings.Name.Visible = false end
 
                         if espSettings.Tracer and drawings.Tracer then
@@ -717,21 +848,36 @@ Players.PlayerRemoving:Connect(function(p)
     end
 end)
 
--- หน้าตั้งค่า (พร้อมโหมด RGB เต็มรูปแบบ)
+-- หน้าตั้งค่า
 local settingPage = Pages["ตั้งค่า"]
 createLabel(settingPage, "ข้อมูลระบบและประสิทธิภาพ")
 
-local fpsLabel = createLabel(settingPage, "FPS: กำลังโหลด...")
-task.spawn(function()
-    while true do
-        local currentTime = tick()
-        local frameCount = 0
-        while tick() - currentTime < 1 do
-            frameCount = frameCount + 1
-            RunService.RenderStepped:Wait()
-        end
-        fpsLabel.Text = "FPS: " .. frameCount
+local fpsToggleContainer = Instance.new("Frame")
+fpsToggleContainer.Size = UDim2.new(1, 0, 0, 40)
+fpsToggleContainer.BackgroundTransparency = 1
+fpsToggleContainer.Parent = settingPage
+local fpsToggleLabel = createLabel(fpsToggleContainer, "แสดง FPS ด่วนที่มุมขวาบน")
+fpsToggleLabel.Size = UDim2.new(0, 180, 1, 0)
+
+local fpsToggleBtn = Instance.new("TextButton")
+fpsToggleBtn.Size = UDim2.new(0, 60, 0, 28)
+fpsToggleBtn.Position = UDim2.new(1, -60, 0.5, -14)
+fpsToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+fpsToggleBtn.Text = "OFF"
+fpsToggleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+fpsToggleBtn.TextSize, fpsToggleBtn.Font = 12, Enum.Font.GothamBold
+fpsToggleBtn.Parent = fpsToggleContainer
+Instance.new("UICorner", fpsToggleBtn).CornerRadius = UDim.new(1, 0)
+
+fpsToggleBtn.MouseButton1Click:Connect(function()
+    isFPSActive = not isFPSActive
+    local topFps = playerGui:FindFirstChild("ShadowHex_FPSOverlay")
+    if topFps and topFps:FindFirstChild("TopRightFPS") then
+        topFps.TopRightFPS.Visible = isFPSActive
     end
+    fpsToggleBtn.Text = isFPSActive and "ON" or "OFF"
+    fpsToggleBtn.BackgroundColor3 = isFPSActive and currentThemeColor or Color3.fromRGB(40, 40, 40)
+    fpsToggleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 end)
 
 local mapNameText = "Unknown Map"
@@ -752,7 +898,7 @@ copyMapBtn.Size = UDim2.new(0, 80, 0, 28)
 copyMapBtn.Position = UDim2.new(1, -80, 0.5, -14)
 copyMapBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 copyMapBtn.Text = "คัดลอกชื่อ"
-copyMapBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+copyMapBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 copyMapBtn.TextSize, copyMapBtn.Font = 12, Enum.Font.GothamBold
 copyMapBtn.Parent = mapContainer
 Instance.new("UICorner", copyMapBtn).CornerRadius = UDim.new(0, 6)
@@ -774,61 +920,4 @@ local rgbContainer = Instance.new("Frame")
 rgbContainer.Size = UDim2.new(1, 0, 0, 36)
 rgbContainer.BackgroundTransparency = 1
 rgbContainer.Parent = settingPage
-local rgbLabel = createLabel(rgbContainer, "โหมดสีรุ้งอัตโนมัติ (RGB)")
-rgbLabel.Size = UDim2.new(1, -70, 1, 0)
-
-local rgbBtn = Instance.new("TextButton")
-rgbBtn.Size = UDim2.new(0, 60, 0, 28)
-rgbBtn.Position = UDim2.new(1, -60, 0.5, -14)
-rgbBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-rgbBtn.Text = "OFF"
-rgbBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
-rgbBtn.TextSize, rgbBtn.Font = 12, Enum.Font.GothamBold
-rgbBtn.Parent = rgbContainer
-Instance.new("UICorner", rgbBtn).CornerRadius = UDim.new(1, 0)
-
-rgbBtn.MouseButton1Click:Connect(function()
-    isRGBActive = not isRGBActive
-    rgbBtn.Text = isRGBActive and "ON" or "OFF"
-    rgbBtn.BackgroundColor3 = isRGBActive and Color3.fromRGB(220, 50, 50) or Color3.fromRGB(40, 40, 40)
-    rgbBtn.TextColor3 = isRGBActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
-end)
-
-local colorRowFrame = Instance.new("ScrollingFrame")
-colorRowFrame.Size = UDim2.new(1, 0, 0, 48)
-colorRowFrame.BackgroundTransparency = 1
-colorRowFrame.BorderSizePixel = 0
-colorRowFrame.CanvasSize = UDim2.new(0, 460, 0, 0)
-colorRowFrame.ScrollBarThickness = 2
-colorRowFrame.Parent = settingPage
-
-local colorRowLayout = Instance.new("UIListLayout")
-colorRowLayout.FillDirection = Enum.FillDirection.Horizontal
-colorRowLayout.SortOrder = Enum.SortOrder.LayoutOrder
-colorRowLayout.Padding = UDim.new(0, 6)
-colorRowLayout.Parent = colorRowFrame
-
-local colorsList = {
-    Color3.fromRGB(140, 60, 220), Color3.fromRGB(220, 50, 50),
-    Color3.fromRGB(50, 150, 220), Color3.fromRGB(50, 220, 100),
-    Color3.fromRGB(240, 200, 50), Color3.fromRGB(240, 100, 200),
-    Color3.fromRGB(255, 128, 0),   Color3.fromRGB(0, 255, 255),
-    Color3.fromRGB(150, 150, 150), Color3.fromRGB(255, 255, 255)
-}
-
-for _, col in ipairs(colorsList) do
-    local cBtn = Instance.new("TextButton")
-    cBtn.Size = UDim2.new(0, 40, 0, 40)
-    cBtn.BackgroundColor3 = col
-    cBtn.Text = ""
-    cBtn.Parent = colorRowFrame
-    Instance.new("UICorner", cBtn).CornerRadius = UDim.new(0, 8)
-    cBtn.MouseButton1Click:Connect(function()
-        isRGBActive = false
-        rgbBtn.Text = "OFF"
-        rgbBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        rgbBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
-        updateTheme(col)
-    end)
-end
-print("Shadow Hex v 2 - Part 2 Loaded Successfully! RGB Mode is Ready.")
+local rgbLabel = createLabel(rgbContainer, "โหมดสีรุ้งอ
