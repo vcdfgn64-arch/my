@@ -2,7 +2,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local MarketplaceService = game:GetService("MarketplaceService")
 
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
@@ -481,17 +480,14 @@ RunService.RenderStepped:Connect(function()
         end
     end)
 end)
-print("Shadow Hex v 2 - Part 1 Loaded Successfully!")
--- [[ Shadow Hex v 2 - Part 2: Fling, FOV, ESP & Settings ]] --
+-- [[ Shadow Hex v 2 - Part 2.1: Fling & FOV ]] --
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local MarketplaceService = game:GetService("MarketplaceService")
 
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local camera = workspace.CurrentCamera
 
--- ค้นหาหน้าต่าง UI หลักที่สร้างไว้จากพาร์ทแรก
 local ScreenGui = playerGui:WaitForChild("ShadowHex_UI")
 local MainFrame = ScreenGui:WaitForChild("MainFrame")
 local ContentArea = MainFrame:WaitForChild("ContentArea")
@@ -502,8 +498,6 @@ for _, name in ipairs({"ตัวเรา", "บิน", "หมุน", "ก�
 end
 
 local currentThemeColor = Color3.fromRGB(140, 60, 220)
-local isRGBActive = false
-local isFPSActive = false
 
 local function createLabel(parent, text)
     local lbl = Instance.new("TextLabel")
@@ -736,6 +730,39 @@ RunService.RenderStepped:Connect(function()
         end
     end)
 end)
+-- [[ Shadow Hex v 2 - Part 2.2: ESP & Settings ]] --
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+local localPlayer = Players.LocalPlayer
+local playerGui = localPlayer:WaitForChild("PlayerGui")
+local camera = workspace.CurrentCamera
+
+local ScreenGui = playerGui:WaitForChild("ShadowHex_UI")
+local MainFrame = ScreenGui:WaitForChild("MainFrame")
+local ContentArea = MainFrame:WaitForChild("ContentArea")
+
+local Pages = {}
+for _, name in ipairs({"ตัวเรา", "บิน", "หมุน", "กระเด็น", "FOV", "ESP", "ตั้งค่า"}) do
+    Pages[name] = ContentArea:WaitForChild(name .. "Page")
+end
+
+local currentThemeColor = Color3.fromRGB(140, 60, 220)
+local isRGBActive = false
+local isFPSActive = false
+
+local function createLabel(parent, text)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 22)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Color3.fromRGB(0, 0, 0)
+    lbl.TextSize, lbl.Font = 14, Enum.Font.GothamMedium
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = parent
+    return lbl
+end
 
 -- หน้า ESP
 local espPage = Pages["ESP"]
@@ -920,4 +947,61 @@ local rgbContainer = Instance.new("Frame")
 rgbContainer.Size = UDim2.new(1, 0, 0, 36)
 rgbContainer.BackgroundTransparency = 1
 rgbContainer.Parent = settingPage
-local rgbLabel = createLabel(rgbContainer, "โหมดสีรุ้งอ
+local rgbLabel = createLabel(rgbContainer, "โหมดสีรุ้งอัตโนมัติ (RGB)")
+rgbLabel.Size = UDim2.new(1, -70, 1, 0)
+
+local rgbBtn = Instance.new("TextButton")
+rgbBtn.Size = UDim2.new(0, 60, 0, 28)
+rgbBtn.Position = UDim2.new(1, -60, 0.5, -14)
+rgbBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+rgbBtn.Text = "OFF"
+rgbBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+rgbBtn.TextSize, rgbBtn.Font = 12, Enum.Font.GothamBold
+rgbBtn.Parent = rgbContainer
+Instance.new("UICorner", rgbBtn).CornerRadius = UDim.new(1, 0)
+
+rgbBtn.MouseButton1Click:Connect(function()
+    isRGBActive = not isRGBActive
+    rgbBtn.Text = isRGBActive and "ON" or "OFF"
+    rgbBtn.BackgroundColor3 = isRGBActive and Color3.fromRGB(220, 50, 50) or Color3.fromRGB(40, 40, 40)
+    rgbBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+end)
+
+local colorRowFrame = Instance.new("ScrollingFrame")
+colorRowFrame.Size = UDim2.new(1, 0, 0, 48)
+colorRowFrame.BackgroundTransparency = 1
+colorRowFrame.BorderSizePixel = 0
+colorRowFrame.CanvasSize = UDim2.new(0, 460, 0, 0)
+colorRowFrame.ScrollBarThickness = 2
+colorRowFrame.Parent = settingPage
+
+local colorRowLayout = Instance.new("UIListLayout")
+colorRowLayout.FillDirection = Enum.FillDirection.Horizontal
+colorRowLayout.SortOrder = Enum.SortOrder.LayoutOrder
+colorRowLayout.Padding = UDim.new(0, 6)
+colorRowLayout.Parent = colorRowFrame
+
+local colorsList = {
+    Color3.fromRGB(140, 60, 220), Color3.fromRGB(220, 50, 50),
+    Color3.fromRGB(50, 150, 220), Color3.fromRGB(50, 220, 100),
+    Color3.fromRGB(240, 200, 50), Color3.fromRGB(240, 100, 200),
+    Color3.fromRGB(255, 128, 0),   Color3.fromRGB(0, 255, 255),
+    Color3.fromRGB(150, 150, 150), Color3.fromRGB(255, 255, 255)
+}
+
+for _, col in ipairs(colorsList) do
+    local cBtn = Instance.new("TextButton")
+    cBtn.Size = UDim2.new(0, 40, 0, 40)
+    cBtn.BackgroundColor3 = col
+    cBtn.BackgroundTransparency = 0.2
+    cBtn.Text = ""
+    cBtn.Parent = colorRowFrame
+    Instance.new("UICorner", cBtn).CornerRadius = UDim.new(0, 8)
+    cBtn.MouseButton1Click:Connect(function()
+        isRGBActive = false
+        rgbBtn.Text = "OFF"
+        rgbBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        rgbBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+        currentThemeColor = col
+    end)
+end
