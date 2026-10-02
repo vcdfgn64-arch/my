@@ -1,4 +1,4 @@
--- [[ Shadow Hex v 2 - Part 1 67: Core, Character, Fly & Spin ]] --
+-- [[ Shadow Hex v 2 - Part 1: Core, Character, Fly & Spin ]] --
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
