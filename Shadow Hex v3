@@ -1,28 +1,38 @@
--- [[ Shadow Hex v 3 - Part 1/2.2 ]] --
+-- [[ Shadow Hex v 3 - Part 1/2 ]] --
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local MarketplaceService = game:GetService("MarketplaceService")
 
 local localPlayer = Players.LocalPlayer
-local camera = workspace.CurrentCamera
-local playerGui = localPlayer:FindFirstChild("PlayerGui") or CoreGui
+local playerGui = localPlayer:WaitForChild("PlayerGui")
 
--- ลบ UI เก่าทิ้งเพื่อความสะอาด
+-- ลบ UI เก่าทิ้งถ้ามี
 pcall(function()
     if playerGui:FindFirstChild("ShadowHex_MainUI") then playerGui.ShadowHex_MainUI:Destroy() end
     if playerGui:FindFirstChild("ShadowHex_FlyUI") then playerGui.ShadowHex_FlyUI:Destroy() end
     if playerGui:FindFirstChild("ShadowHex_FPSOverlay") then playerGui.ShadowHex_FPSOverlay:Destroy() end
+    if playerGui:FindFirstChild("ShadowHex_ToggleBtnUI") then playerGui.ShadowHex_ToggleBtnUI:Destroy() end
 end)
 
--- ตัวแปรระบบธีมและปุ่ม
-local currentThemeColor = Color3.fromRGB(140, 60, 220) -- ม่วงไซเบอร์
+local currentThemeColor = Color3.fromRGB(140, 60, 220) -- สีม่วงไซเบอร์พังก์
 local isRGBActive = false
 local isFPSActive = false
-local activeToggleButtons = {}
-local sliderFillsList = {}
-local themeStrokes = {}
+
+local allUIStrokes = {}
+local allSliderFills = {}
+
+local function updateTheme(newColor)
+    currentThemeColor = newColor
+    for _, stroke in pairs(allUIStrokes) do
+        pcall(function() stroke.Color = newColor end)
+    end
+    for _, fill in pairs(allSliderFills) do
+        pcall(function() fill.BackgroundColor3 = newColor end)
+    end
+end
 
 -- สร้าง ScreenGui หลัก
 local ScreenGui = Instance.new("ScreenGui")
@@ -34,121 +44,182 @@ ScreenGui.Parent = playerGui
 -- หน้าต่างหลัก (Main Frame)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 520, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -260, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 520, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -170)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
-MainFrame.BackgroundTransparency = 0.05
+MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
-
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Color = currentThemeColor
 MainStroke.Thickness = 2
 MainStroke.Parent = MainFrame
-table.insert(themeStrokes, MainStroke)
+table.insert(allUIStrokes, MainStroke)
 
--- แถบหัวข้อ (Top Bar)
+-- แถบด้านบน (Top Bar)
 local TopBar = Instance.new("Frame")
-TopBar.Size = UDim2.new(1, 0, 0, 38)
-TopBar.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
+TopBar.Size = UDim2.new(1, 0, 0, 36)
+TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 TopBar.BorderSizePixel = 0
 TopBar.Parent = MainFrame
 Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 10)
 
--- แก้เหลี่ยมด้านล่างของ TopBar
-local FixBar = Instance.new("Frame")
-FixBar.Size = UDim2.new(1, 0, 0, 10)
-FixBar.Position = UDim2.new(0, 0, 1, -10)
-FixBar.BackgroundColor3 = Color3.fromRGB(22, 22, 26)
-FixBar.BorderSizePixel = 0
-FixBar.Parent = TopBar
+local TopBarFix = Instance.new("Frame")
+TopBarFix.Size = UDim2.new(1, 0, 0, 10)
+TopBarFix.Position = UDim2.new(0, 0, 1, -10)
+TopBarFix.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TopBarFix.BorderSizePixel = 0
+TopBarFix.Parent = TopBar
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, -100, 1, 0)
-TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+TitleLabel.Size = UDim2.new(0, 200, 1, 0)
+TitleLabel.Position = UDim2.new(0, 12, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "SHADOW HEX v3 | CYBERPUNK EDITION"
-TitleLabel.TextColor3 = Color3.fromRGB(240, 240, 240)
-TitleLabel.TextSize = 13
+TitleLabel.Text = "SHADOW HEX v3"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 14
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Parent = TopBar
 
--- ปุ่มปิด (X) และย่อ (Minimize)
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0.5, -15)
+CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+CloseBtn.Position = UDim2.new(1, -34, 0.5, -14)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
 CloseBtn.Text = "X"
-CloseBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.TextSize, CloseBtn.Font = 12, Enum.Font.GothamBold
 CloseBtn.Parent = TopBar
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 
 CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
+    pcall(function() playerGui.ShadowHex_ToggleBtnUI:Destroy() end)
+    pcall(function() playerGui.ShadowHex_FlyUI:Destroy() end)
+    pcall(function() playerGui.ShadowHex_FPSOverlay:Destroy() end)
 end)
 
-local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0, 30, 0, 30)
-MinBtn.Position = UDim2.new(1, -70, 0.5, -15)
-MinBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-MinBtn.Text = "-"
-MinBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-MinBtn.TextSize, MinBtn.Font = 14, Enum.Font.GothamBold
-MinBtn.Parent = TopBar
-Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
+-- ปุ่มลอยเปิด-ปิด UI
+local ToggleBtnGui = Instance.new("ScreenGui")
+ToggleBtnGui.Name = "ShadowHex_ToggleBtnUI"
+ToggleBtnGui.ResetOnSpawn = false
+ToggleBtnGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ToggleBtnGui.Parent = playerGui
 
-local isMinimized = false
-MinBtn.MouseButton1Click:Connect(function()
-    isMinimized = not isMinimized
-    for _, child in pairs(MainFrame:GetChildren()) do
-        if child ~= TopBar and child ~= MainStroke then
-            child.Visible = not isMinimized
-        end
-    end
-    MainFrame.Size = isMinimized and UDim2.new(0, 520, 0, 38) or UDim2.new(0, 520, 0, 320)
+local FloatingToggleBtn = Instance.new("ImageButton")
+FloatingToggleBtn.Size = UDim2.new(0, 45, 0, 45)
+FloatingToggleBtn.Position = UDim2.new(0, 50, 0.4, 0)
+FloatingToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+FloatingToggleBtn.Image = "rbxassetid://128047290610837"
+FloatingToggleBtn.Active = true
+FloatingToggleBtn.Draggable = true
+FloatingToggleBtn.Parent = ToggleBtnGui
+Instance.new("UICorner", FloatingToggleBtn).CornerRadius = UDim.new(0, 8)
+
+local FloatingStroke = Instance.new("UIStroke")
+FloatingStroke.Color = currentThemeColor
+FloatingStroke.Thickness = 2
+FloatingStroke.Parent = FloatingToggleBtn
+table.insert(allUIStrokes, FloatingStroke)
+
+FloatingToggleBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
 end)
 
--- แถบเมนูด้านซ้าย (Sidebar)
+-- Sidebar & Container
 local Sidebar = Instance.new("ScrollingFrame")
-Sidebar.Size = UDim2.new(0, 130, 1, -48)
-Sidebar.Position = UDim2.new(0, 8, 0, 42)
-Sidebar.BackgroundTransparency = 1
+Sidebar.Size = UDim2.new(0, 130, 1, -46)
+Sidebar.Position = UDim2.new(0, 6, 0, 42)
+Sidebar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 Sidebar.BorderSizePixel = 0
-Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
-Sidebar.AutomaticCanvasSize = Enum.AutomaticSize.Y
 Sidebar.ScrollBarThickness = 2
+Sidebar.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
 Sidebar.Parent = MainFrame
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
 
 local SidebarLayout = Instance.new("UIListLayout")
 SidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
 SidebarLayout.Padding = UDim.new(0, 4)
 SidebarLayout.Parent = Sidebar
 
--- พื้นที่แสดงเนื้อหาแต่ละหน้า (Content Container)
-local Container = Instance.new("Frame")
-Container.Size = UDim2.new(1, -150, 1, -48)
-Container.Position = UDim2.new(0, 144, 0, 42)
-Container.BackgroundTransparency = 1
-Container.Parent = MainFrame
+local ContentContainer = Instance.new("Frame")
+ContentContainer.Size = UDim2.new(1, -148, 1, -46)
+ContentContainer.Position = UDim2.new(0, 142, 0, 42)
+ContentContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+ContentContainer.BorderSizePixel = 0
+ContentContainer.Parent = MainFrame
+Instance.new("UICorner", ContentContainer).CornerRadius = UDim.new(0, 8)
 
--- ระบบจัดการหน้าต่าง (Pages)
+local ContentStroke = Instance.new("UIStroke")
+ContentStroke.Color = Color3.fromRGB(40, 40, 50)
+ContentStroke.Thickness = 1
+ContentStroke.Parent = ContentContainer
+table.insert(allUIStrokes, ContentStroke)
+
 local Pages = {}
 local tabButtons = {}
-local pageNames = {"หน้าแรก", "ตัวเรา", "บิน", "หมุน", "กระเด็น", "FOV", "ESP", "ตั้งค่า"}
+local firstTab = true
 
--- ฟังก์ชันเสริมสร้าง UI ย่อย
+local function createTab(name)
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, -12, 1, -12)
+    page.Position = UDim2.new(0, 6, 0, 6)
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.Visible = false
+    page.ScrollBarThickness = 3
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.Parent = ContentContainer
+
+    local layout = Instance.new("UIListLayout")
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 8)
+    layout.Parent = page
+    Pages[name] = page
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -8, 0, 32)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.TextSize, btn.Font = 12, Enum.Font.GothamMedium
+    btn.Parent = Sidebar
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+
+    btn.MouseButton1Click:Connect(function()
+        for _, p in pairs(Pages) do p.Visible = false end
+        for _, b in pairs(tabButtons) do 
+            b.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+            b.TextColor3 = Color3.fromRGB(200, 200, 200)
+        end
+        page.Visible = true
+        btn.BackgroundColor3 = currentThemeColor
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end)
+
+    if firstTab then
+        page.Visible = true
+        btn.BackgroundColor3 = currentThemeColor
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        firstTab = false
+    end
+
+    table.insert(tabButtons, btn)
+    return page
+end
+
 local function createLabel(parent, text)
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, 0, 0, 24)
     lbl.BackgroundTransparency = 1
     lbl.Text = text
-    lbl.TextColor3 = Color3.fromRGB(220, 220, 230)
-    lbl.TextSize = 12
-    lbl.Font = Enum.Font.GothamMedium
+    lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+    lbl.TextSize, lbl.Font = 12, Enum.Font.GothamMedium
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Parent = parent
     return lbl
@@ -156,11 +227,11 @@ end
 
 local function createSliderBg(parent)
     local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(1, 0, 0, 6)
-    bg.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    bg.Size = UDim2.new(1, 0, 0, 20)
+    bg.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
     bg.BorderSizePixel = 0
     bg.Parent = parent
-    Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 6)
     return bg
 end
 
@@ -170,25 +241,20 @@ local function createSliderFill(bg, size)
     fill.BackgroundColor3 = currentThemeColor
     fill.BorderSizePixel = 0
     fill.Parent = bg
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
-    table.insert(sliderFillsList, fill)
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 6)
+    table.insert(allSliderFills, fill)
     return fill
 end
 
 local function applySlider(bg, fill, minVal, maxVal, callback)
-    local uis = game:GetService("UserInputService")
     local dragging = false
     bg.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-        end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true end
     end)
-    uis.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
     end)
-    uis.InputChanged:Connect(function(input)
+    UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local pos = math.clamp((input.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
             fill.Size = UDim2.new(pos, 0, 1, 0)
@@ -198,113 +264,14 @@ local function applySlider(bg, fill, minVal, maxVal, callback)
     end)
 end
 
--- สร้างหน้าต่างและปุ่มเมนู
-for i, name in ipairs(pageNames) do
-    local page = Instance.new("ScrollingFrame")
-    page.Size = UDim2.new(1, 0, 1, 0)
-    page.BackgroundTransparency = 1
-    page.BorderSizePixel = 0
-    page.Visible = (i == 1)
-    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    page.CanvasSize = UDim2.new(0, 0, 0, 0)
-    page.ScrollBarThickness = 3
-    page.Parent = Container
-    
-    local layout = Instance.new("UIListLayout")
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0, 8)
-    layout.Parent = page
-    
-    Pages[name] = page
-    
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 32)
-    btn.BackgroundColor3 = (i == 1) and Color3.fromRGB(35, 35, 42) or Color3.fromRGB(20, 20, 24)
-    btn.Text = "  " .. name
-    btn.TextColor3 = (i == 1) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(160, 160, 170)
-    btn.TextSize, btn.Font = 12, Enum.Font.GothamMedium
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.Parent = Sidebar
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    
-    table.insert(tabButtons, {Btn = btn, Name = name})
-    
-    btn.MouseButton1Click:Connect(function()
-        for _, p in pairs(Pages) do p.Visible = false end
-        for _, b in pairs(tabButtons) do
-            b.Btn.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
-            b.Btn.TextColor3 = Color3.fromRGB(160, 160, 170)
-        end
-        page.Visible = true
-        btn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    end)
-end
+createTab("ตัวเรา")
+createTab("บิน")
+createTab("หมุน")
+createTab("กระเด็น")
+createTab("FOV")
+createTab("ESP")
+createTab("ตั้งค่า")
 
--- หน้าแรก (Dashboard)
-local homePage = Pages["หน้าแรก"]
-createLabel(homePage, "ยินดีต้อนรับสู่ระบบ Shadow Hex v3")
-createLabel(homePage, "สถานะสคริปต์: พร้อมใช้งานเต็มรูปแบบ")
-createLabel(homePage, "ผู้ใช้งาน: " .. localPlayer.Name)
-
--- FPS Overlay มุมขวาบนจอ
-local fpsGui = Instance.new("ScreenGui")
-fpsGui.Name = "ShadowHex_FPSOverlay"
-fpsGui.ResetOnSpawn = false
-fpsGui.Parent = playerGui
-
-local fpsText = Instance.new("TextLabel")
-fpsText.Name = "TopRightFPS"
-fpsText.Size = UDim2.new(0, 120, 0, 30)
-fpsText.Position = UDim2.new(1, -130, 0, 10)
-fpsText.BackgroundTransparency = 0.5
-fpsText.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-fpsText.TextColor3 = Color3.fromRGB(0, 255, 100)
-fpsText.TextSize, fpsText.Font = 14, Enum.Font.GothamBold
-fpsText.Visible = false
-fpsText.Parent = fpsGui
-Instance.new("UICorner", fpsText).CornerRadius = UDim.new(0, 6)
-
-local lastTick = tick()
-local frameCount = 0
-RunService.RenderStepped:Connect(function()
-    frameCount = frameCount + 1
-    local currentTick = tick()
-    if currentTick - lastTick >= 1 then
-        local fps = math.floor(frameCount / (currentTick - lastTick))
-        fpsText.Text = " FPS: " .. fps
-        frameCount = 0
-        lastTick = currentTick
-    end
-end)
-
--- ฟังก์ชันอัปเดตสีธีมทั่วระบบ
-local function updateTheme(newColor)
-    currentThemeColor = newColor
-    for _, stroke in pairs(themeStrokes) do
-        if stroke and stroke.Parent then stroke.Color = newColor end
-    end
-    for _, fill in pairs(sliderFillsList) do
-        if fill and fill.Parent then fill.BackgroundColor3 = newColor end
-    end
-    for _, item in pairs(activeToggleButtons) do
-        if item.Btn and item.Btn.Parent and item.State then
-            item.Btn.BackgroundColor3 = newColor
-        end
-    end
-end
-
--- ลูปอัปเดตโหมด RGB
-RunService.RenderStepped:Connect(function()
-    if isRGBActive then
-        local hue = tick() % 5 / 5
-        local rgbColor = Color3.fromHSV(hue, 1, 1)
-        updateTheme(rgbColor)
-    end
-end)
-
-print("Part 1 Loaded Successfully!")
--- [[ Shadow Hex v 3 - Part 2.1/2.2 ]] --
 -- หน้าตัวเรา
 local playerPage = Pages["ตัวเรา"]
 local currentWalkSpeed, currentJumpPower = 16, 50
@@ -314,9 +281,6 @@ local speedSliderFill = createSliderFill(speedSliderBg, UDim2.new(16/400, 0, 1, 
 local jumpLabel = createLabel(playerPage, "พลังกระโดด (สูงสุด 400): 50")
 local jumpSliderBg = createSliderBg(playerPage)
 local jumpSliderFill = createSliderFill(jumpSliderBg, UDim2.new(50/400, 0, 1, 0))
-
-table.insert(sliderFillsList, speedSliderFill)
-table.insert(sliderFillsList, jumpSliderFill)
 
 applySlider(speedSliderBg, speedSliderFill, 16, 400, function(val)
     currentWalkSpeed = val
@@ -348,7 +312,7 @@ noclipBtn.Size = UDim2.new(0, 60, 0, 28)
 noclipBtn.Position = UDim2.new(1, -60, 0.5, -14)
 noclipBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 noclipBtn.Text = "OFF"
-noclipBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+noclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 noclipBtn.TextSize, noclipBtn.Font = 12, Enum.Font.GothamBold
 noclipBtn.Parent = noclipContainer
 Instance.new("UICorner", noclipBtn).CornerRadius = UDim.new(1, 0)
@@ -358,8 +322,7 @@ noclipBtn.MouseButton1Click:Connect(function()
     noclipEnabled = not noclipEnabled
     noclipBtn.Text = noclipEnabled and "ON" or "OFF"
     noclipBtn.BackgroundColor3 = noclipEnabled and currentThemeColor or Color3.fromRGB(40, 40, 40)
-    noclipBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-    table.insert(activeToggleButtons, {Btn = noclipBtn, State = noclipEnabled})
+    noclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
 RunService.Stepped:Connect(function()
@@ -383,7 +346,7 @@ flyBtn.Size = UDim2.new(0, 60, 0, 28)
 flyBtn.Position = UDim2.new(1, -60, 0.5, -14)
 flyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 flyBtn.Text = "OFF"
-flyBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+flyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 flyBtn.TextSize, flyBtn.Font = 12, Enum.Font.GothamBold
 flyBtn.Parent = flyToggleContainer
 Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(1, 0)
@@ -391,7 +354,6 @@ Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(1, 0)
 local flySpeedLabel = createLabel(flyPage, "ความเร็วการบิน: 50")
 local flySpeedBg = createSliderBg(flyPage)
 local flySpeedFill = createSliderFill(flySpeedBg, UDim2.new(50/200, 0, 1, 0))
-table.insert(sliderFillsList, flySpeedFill)
 local flySpeed = 50
 applySlider(flySpeedBg, flySpeedFill, 10, 200, function(val) flySpeed = val flySpeedLabel.Text = "ความเร็วการบิน: " .. val end)
 
@@ -416,7 +378,7 @@ local function createPadButton(text, pos)
     b.Position = pos
     b.BackgroundColor3 = Color3.fromRGB(35, 35, 38)
     b.Text = text
-    b.TextColor3 = currentThemeColor
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
     b.TextSize = 22
     b.Font = Enum.Font.GothamBold
     b.Parent = FlyBox
@@ -438,9 +400,8 @@ flyBtn.MouseButton1Click:Connect(function()
     flyActive = not flyActive
     flyBtn.Text = flyActive and "ON" or "OFF"
     flyBtn.BackgroundColor3 = flyActive and currentThemeColor or Color3.fromRGB(40, 40, 40)
-    flyBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    flyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     FlyBox.Visible = flyActive
-    table.insert(activeToggleButtons, {Btn = flyBtn, State = flyActive})
 end)
 
 local movingStates = {Forward = false, Up = false, Backward = false, Down = false}
@@ -458,7 +419,7 @@ RunService.RenderStepped:Connect(function()
         if flyActive and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
             local hrp = localPlayer.Character.HumanoidRootPart
             local humanoid = localPlayer.Character:FindFirstChild("Humanoid")
-            local camCFrame = camera.CFrame
+            local camCFrame = workspace.CurrentCamera.CFrame
             if humanoid then humanoid.PlatformStand = true end
             
             local velocity = Vector3.new(0, 0, 0)
@@ -477,6 +438,7 @@ RunService.RenderStepped:Connect(function()
         end
     end)
 end)
+-- [[ Shadow Hex v 3 - Part 2.1 ]] --
 
 -- หน้าหมุน
 local spinPage = Pages["หมุน"]
@@ -491,7 +453,7 @@ spinBtn.Size = UDim2.new(0, 60, 0, 28)
 spinBtn.Position = UDim2.new(1, -60, 0.5, -14)
 spinBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 spinBtn.Text = "OFF"
-spinBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+spinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 spinBtn.TextSize, spinBtn.Font = 12, Enum.Font.GothamBold
 spinBtn.Parent = spinToggleContainer
 Instance.new("UICorner", spinBtn).CornerRadius = UDim.new(1, 0)
@@ -499,7 +461,6 @@ Instance.new("UICorner", spinBtn).CornerRadius = UDim.new(1, 0)
 local spinSpeedLabel = createLabel(spinPage, "ความเร็วในการหมุน: 50")
 local spinSpeedBg = createSliderBg(spinPage)
 local spinSpeedFill = createSliderFill(spinSpeedBg, UDim2.new(50/500, 0, 1, 0))
-table.insert(sliderFillsList, spinSpeedFill)
 local spinSpeed = 50
 applySlider(spinSpeedBg, spinSpeedFill, 10, 500, function(val) spinSpeed = val spinSpeedLabel.Text = "ความเร็วในการหมุน: " .. val end)
 
@@ -508,8 +469,7 @@ spinBtn.MouseButton1Click:Connect(function()
     spinActive = not spinActive
     spinBtn.Text = spinActive and "ON" or "OFF"
     spinBtn.BackgroundColor3 = spinActive and currentThemeColor or Color3.fromRGB(40, 40, 40)
-    spinBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-    table.insert(activeToggleButtons, {Btn = spinBtn, State = spinActive})
+    spinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
 RunService.RenderStepped:Connect(function()
@@ -531,7 +491,7 @@ targetDropdownBtn.Size = UDim2.new(1, 0, 0, 36)
 targetDropdownBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 targetDropdownBtn.BackgroundTransparency = 0.3
 targetDropdownBtn.Text = "คลิกเพื่อเลือกเป้าหมาย"
-targetDropdownBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+targetDropdownBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 targetDropdownBtn.TextSize, targetDropdownBtn.Font = 13, Enum.Font.GothamMedium
 targetDropdownBtn.Parent = flingPage
 Instance.new("UICorner", targetDropdownBtn).CornerRadius = UDim.new(0, 8)
@@ -559,7 +519,7 @@ local function updateTargetList()
             pBtn.Size = UDim2.new(1, 0, 0, 28)
             pBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
             pBtn.Text = p.Name
-            pBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+            pBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
             pBtn.TextSize, pBtn.Font = 12, Enum.Font.Gotham
             pBtn.Parent = targetListFrame
             Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 6)
@@ -580,7 +540,6 @@ end)
 local flingSpeedLabel = createLabel(flingPage, "ความเร็วในการหมุนกระเด็น (สูงสุด 5000): 3000")
 local flingSpeedBg = createSliderBg(flingPage)
 local flingSpeedFill = createSliderFill(flingSpeedBg, UDim2.new(3000/5000, 0, 1, 0))
-table.insert(sliderFillsList, flingSpeedFill)
 local targetFlingSpeed = 3000
 applySlider(flingSpeedBg, flingSpeedFill, 100, 5000, function(val) targetFlingSpeed = val flingSpeedLabel.Text = "ความเร็วในการหมุนกระเด็น (สูงสุด 5000): " .. val end)
 
@@ -588,7 +547,7 @@ local flingActionBtn = Instance.new("TextButton")
 flingActionBtn.Size = UDim2.new(1, 0, 0, 42)
 flingActionBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
 flingActionBtn.Text = "เริ่มอัดกระแทกเป้าหมาย (Fling)"
-flingActionBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+flingActionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 flingActionBtn.TextSize, flingActionBtn.Font = 14, Enum.Font.GothamBold
 flingActionBtn.Parent = flingPage
 Instance.new("UICorner", flingActionBtn).CornerRadius = UDim.new(0, 8)
@@ -623,8 +582,7 @@ flingActionBtn.MouseButton1Click:Connect(function()
         end
     end
 end)
-print("Part 2.1 Loaded Successfully!")
--- [[ Shadow Hex v 3 - Part 2.2/2.2 ]] --
+
 -- หน้า FOV
 local fovPage = Pages["FOV"]
 local fovToggleContainer = Instance.new("Frame")
@@ -638,7 +596,7 @@ fovToggleBtn.Size = UDim2.new(0, 60, 0, 28)
 fovToggleBtn.Position = UDim2.new(1, -60, 0.5, -14)
 fovToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 fovToggleBtn.Text = "OFF"
-fovToggleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+fovToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 fovToggleBtn.TextSize, fovToggleBtn.Font = 12, Enum.Font.GothamBold
 fovToggleBtn.Parent = fovToggleContainer
 Instance.new("UICorner", fovToggleBtn).CornerRadius = UDim.new(1, 0)
@@ -648,14 +606,12 @@ fovToggleBtn.MouseButton1Click:Connect(function()
     fovEnabled = not fovEnabled
     fovToggleBtn.Text = fovEnabled and "ON" or "OFF"
     fovToggleBtn.BackgroundColor3 = fovEnabled and currentThemeColor or Color3.fromRGB(40, 40, 40)
-    fovToggleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-    table.insert(activeToggleButtons, {Btn = fovToggleBtn, State = fovEnabled})
+    fovToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
 local fovLabel = createLabel(fovPage, "รัศมี FOV: 100")
 local fovSliderBg = createSliderBg(fovPage)
 local fovSliderFill = createSliderFill(fovSliderBg, UDim2.new(100/400, 0, 1, 0))
-table.insert(sliderFillsList, fovSliderFill)
 local fovRadius = 100
 applySlider(fovSliderBg, fovSliderFill, 50, 400, function(val) fovRadius = val fovLabel.Text = "รัศมี FOV: " .. val end)
 
@@ -672,6 +628,7 @@ end)
 
 local function getClosestPlayerInFOV()
     local closest, shortestDist = nil, fovRadius
+    local camera = workspace.CurrentCamera
     local screenCenter = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= localPlayer and p.Character and p.Character:FindFirstChild("Head") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
@@ -687,6 +644,7 @@ end
 
 RunService.RenderStepped:Connect(function()
     pcall(function()
+        local camera = workspace.CurrentCamera
         if successDrawing and fovDrawing then
             if fovEnabled then
                 fovDrawing.Visible = true
@@ -701,6 +659,7 @@ RunService.RenderStepped:Connect(function()
         end
     end)
 end)
+-- [[ Shadow Hex v 3 - Part 2.2 ]] --
 
 -- หน้า ESP
 local espPage = Pages["ESP"]
@@ -719,7 +678,7 @@ for _, optionName in ipairs({"ชื่อ (Name)", "ระยะ (Distance)", "
     btn.Position = UDim2.new(1, -60, 0.5, -14)
     btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     btn.Text = "OFF"
-    btn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.TextSize, btn.Font = 12, Enum.Font.GothamBold
     btn.Parent = container
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
@@ -729,8 +688,7 @@ for _, optionName in ipairs({"ชื่อ (Name)", "ระยะ (Distance)", "
         active = not active
         btn.Text = active and "ON" or "OFF"
         btn.BackgroundColor3 = active and currentThemeColor or Color3.fromRGB(40, 40, 40)
-        btn.TextColor3 = Color3.fromRGB(0, 0, 0)
-        table.insert(activeToggleButtons, {Btn = btn, State = active})
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         if optionName:find("ชื่อ") then espSettings.Name = active
         elseif optionName:find("ระยะ") then espSettings.Distance = active
         elseif optionName:find("ขอบ") then espSettings.Box = active
@@ -740,6 +698,7 @@ end
 
 RunService.RenderStepped:Connect(function()
     pcall(function()
+        local camera = workspace.CurrentCamera
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= localPlayer then
                 if not espDrawings[p] then
@@ -783,7 +742,7 @@ RunService.RenderStepped:Connect(function()
                             end
                             drawings.Name.Text = textDisplay
                             drawings.Name.Position = Vector2.new(vector.X, headVec.Y - 18)
-                            drawings.Name.Color = Color3.fromRGB(0, 0, 0)
+                            drawings.Name.Color = Color3.fromRGB(255, 255, 255)
                         elseif drawings.Name then drawings.Name.Visible = false end
 
                         if espSettings.Tracer and drawings.Tracer then
@@ -830,21 +789,48 @@ fpsToggleBtn.Size = UDim2.new(0, 60, 0, 28)
 fpsToggleBtn.Position = UDim2.new(1, -60, 0.5, -14)
 fpsToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 fpsToggleBtn.Text = "OFF"
-fpsToggleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+fpsToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 fpsToggleBtn.TextSize, fpsToggleBtn.Font = 12, Enum.Font.GothamBold
 fpsToggleBtn.Parent = fpsToggleContainer
 Instance.new("UICorner", fpsToggleBtn).CornerRadius = UDim.new(1, 0)
 
+local FPSOverlayGui = Instance.new("ScreenGui")
+FPSOverlayGui.Name = "ShadowHex_FPSOverlay"
+FPSOverlayGui.ResetOnSpawn = false
+FPSOverlayGui.Parent = playerGui
+
+local TopRightFPS = Instance.new("TextLabel")
+TopRightFPS.Name = "TopRightFPS"
+TopRightFPS.Size = UDim2.new(0, 120, 0, 25)
+TopRightFPS.Position = UDim2.new(1, -130, 0, 10)
+TopRightFPS.BackgroundTransparency = 0.5
+TopRightFPS.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+TopRightFPS.Text = "FPS: 0"
+TopRightFPS.TextColor3 = Color3.fromRGB(0, 255, 100)
+TopRightFPS.TextSize, TopRightFPS.Font = 12, Enum.Font.GothamBold
+TopRightFPS.Visible = false
+TopRightFPS.Parent = FPSOverlayGui
+Instance.new("UICorner", TopRightFPS).CornerRadius = UDim.new(0, 6)
+
+local lastTick = tick()
+local frameCount = 0
+RunService.RenderStepped:Connect(function()
+    frameCount = frameCount + 1
+    local currentTick = tick()
+    if currentTick - lastTick >= 1 then
+        local fps = math.round(frameCount / (currentTick - lastTick))
+        TopRightFPS.Text = "FPS: " .. fps
+        frameCount = 0
+        lastTick = currentTick
+    end
+end)
+
 fpsToggleBtn.MouseButton1Click:Connect(function()
     isFPSActive = not isFPSActive
-    local topFps = playerGui:FindFirstChild("ShadowHex_FPSOverlay")
-    if topFps and topFps:FindFirstChild("TopRightFPS") then
-        topFps.TopRightFPS.Visible = isFPSActive
-    end
+    TopRightFPS.Visible = isFPSActive
     fpsToggleBtn.Text = isFPSActive and "ON" or "OFF"
     fpsToggleBtn.BackgroundColor3 = isFPSActive and currentThemeColor or Color3.fromRGB(40, 40, 40)
-    fpsToggleBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-    table.insert(activeToggleButtons, {Btn = fpsToggleBtn, State = isFPSActive})
+    fpsToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 end)
 
 local mapNameText = "Unknown Map"
@@ -865,7 +851,7 @@ copyMapBtn.Size = UDim2.new(0, 80, 0, 28)
 copyMapBtn.Position = UDim2.new(1, -80, 0.5, -14)
 copyMapBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 copyMapBtn.Text = "คัดลอกชื่อ"
-copyMapBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+copyMapBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 copyMapBtn.TextSize, copyMapBtn.Font = 12, Enum.Font.GothamBold
 copyMapBtn.Parent = mapContainer
 Instance.new("UICorner", copyMapBtn).CornerRadius = UDim.new(0, 6)
@@ -895,7 +881,7 @@ rgbBtn.Size = UDim2.new(0, 60, 0, 28)
 rgbBtn.Position = UDim2.new(1, -60, 0.5, -14)
 rgbBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 rgbBtn.Text = "OFF"
-rgbBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+rgbBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 rgbBtn.TextSize, rgbBtn.Font = 12, Enum.Font.GothamBold
 rgbBtn.Parent = rgbContainer
 Instance.new("UICorner", rgbBtn).CornerRadius = UDim.new(1, 0)
@@ -904,7 +890,15 @@ rgbBtn.MouseButton1Click:Connect(function()
     isRGBActive = not isRGBActive
     rgbBtn.Text = isRGBActive and "ON" or "OFF"
     rgbBtn.BackgroundColor3 = isRGBActive and Color3.fromRGB(220, 50, 50) or Color3.fromRGB(40, 40, 40)
-    rgbBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    rgbBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
+RunService.RenderStepped:Connect(function()
+    if isRGBActive then
+        local hue = tick() % 5 / 5
+        local rgbColor = Color3.fromHSV(hue, 1, 1)
+        updateTheme(rgbColor)
+    end
 end)
 
 local colorRowFrame = Instance.new("ScrollingFrame")
@@ -937,13 +931,13 @@ for _, col in ipairs(colorsList) do
     cBtn.Text = ""
     cBtn.Parent = colorRowFrame
     Instance.new("UICorner", cBtn).CornerRadius = UDim.new(0, 8)
-    
     cBtn.MouseButton1Click:Connect(function()
         isRGBActive = false
         rgbBtn.Text = "OFF"
         rgbBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        rgbBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+        rgbBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         updateTheme(col)
     end)
 end
-print("Shadow Hex v 3 - Full Script Loaded Successfully (Part 2.2)!")
+
+print("Shadow Hex v 3 - Full Script with White Text Loaded Successfully!")
